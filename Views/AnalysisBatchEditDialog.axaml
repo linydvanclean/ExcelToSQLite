@@ -1,0 +1,151 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="550"
+             d:DesignHeight="420"
+             x:Class="ExcelToSQLite.Views.AnalysisBatchEditDialog">
+    
+    <UserControl.Styles>
+        <Style Selector="Button.PrimaryButton">
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        
+        <Style Selector="Button.PrimaryButton:pointerover">
+            <Setter Property="Background" Value="#43A047"/>
+        </Style>
+        
+        <Style Selector="Button.SecondaryButton">
+            <Setter Property="Background" Value="#78909C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        
+        <Style Selector="Button.SecondaryButton:pointerover">
+            <Setter Property="Background" Value="#607D8B"/>
+        </Style>
+        
+        <Style Selector="TextBox:focus">
+            <Setter Property="BorderBrush" Value="#2196F3"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+        
+        <Style Selector="DatePicker:focus">
+            <Setter Property="BorderBrush" Value="#2196F3"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="White" 
+            CornerRadius="12" 
+            Padding="24">
+        <StackPanel Spacing="16">
+            <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,0,0,4">
+                <TextBlock Text="🧪" FontSize="28" VerticalAlignment="Center"/>
+                <StackPanel>
+                    <TextBlock Text="{Binding DialogTitle}" 
+                               FontSize="22" 
+                               FontWeight="Bold"
+                               Foreground="#1A237E"/>
+                    <TextBlock Text="{Binding DialogSubtitle}" 
+                               FontSize="13" 
+                               Foreground="#78909C"
+                               Opacity="0.8"/>
+                </StackPanel>
+            </StackPanel>
+
+            <Border Background="#F8F9FA" 
+                    CornerRadius="8" 
+                    Padding="16"
+                    BorderBrush="#E0E0E0"
+                    BorderThickness="1">
+                <Grid ColumnDefinitions="Auto, *" 
+                      RowDefinitions="Auto, Auto, Auto, Auto">
+                    
+                    <TextBlock Grid.Row="0" Grid.Column="0" 
+                               VerticalAlignment="Center"
+                               Foreground="#546E7A"
+                               FontSize="13"
+                               Margin="0,6,16,6">批次名称：</TextBlock>
+                    <TextBox Grid.Row="0" Grid.Column="1" 
+                             Text="{Binding Name}" 
+                             PlaceholderText="请输入批次名称..."
+                             CornerRadius="4"
+                             Padding="8,6"
+                             Margin="0,4"/>
+                    
+                    <TextBlock Grid.Row="1" Grid.Column="0" 
+                               VerticalAlignment="Center"
+                               Foreground="#546E7A"
+                               FontSize="13"
+                               Margin="0,6,16,6">分析期起：</TextBlock>
+                    <DatePicker Grid.Row="1" Grid.Column="1" 
+                                SelectedDate="{Binding PeriodStart}"
+                                CornerRadius="4"
+                                Padding="8,6"
+                                Margin="0,4"/>
+                    
+                    <TextBlock Grid.Row="2" Grid.Column="0" 
+                               VerticalAlignment="Center"
+                               Foreground="#546E7A"
+                               FontSize="13"
+                               Margin="0,6,16,6">分析期止：</TextBlock>
+                    <DatePicker Grid.Row="2" Grid.Column="1" 
+                                SelectedDate="{Binding PeriodEnd}"
+                                CornerRadius="4"
+                                Padding="8,6"
+                                Margin="0,4"/>
+                    
+                    <TextBlock Grid.Row="3" Grid.Column="0" 
+                               VerticalAlignment="Center"
+                               Foreground="#546E7A"
+                               FontSize="13"
+                               Margin="0,6,16,6">表名前缀：</TextBlock>
+                    <Grid Grid.Row="3" Grid.Column="1" 
+                          ColumnDefinitions="*, Auto" Margin="0,4">
+                        <TextBox Grid.Column="0" 
+                                 Text="{Binding TablePrefix}" 
+                                 PlaceholderText="可选，用于合建表时添加前缀..."
+                                 CornerRadius="4"
+                                 Padding="8,6"/>
+                        <TextBlock Grid.Column="1" 
+                                   Text="ℹ️" 
+                                   FontSize="16"
+                                   Foreground="#78909C"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0,0,0"
+                                   ToolTip.Tip="仅允许英文字母、数字和下划线，必须以字母开头"/>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <Border Background="#FFF8E1"
+                    CornerRadius="4"
+                    Padding="10">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="💡" FontSize="16"/>
+                    <TextBlock Text="批次信息将用于后续的数据分析任务，请确保时间范围和表名前缀正确。"
+                               FontSize="12"
+                               Foreground="#BF360C"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
+                <Button Content="取消" 
+                        Command="{Binding CancelCommand}"
+                        Classes="SecondaryButton"/>
+                <Button Content="保存批次" 
+                        Command="{Binding SaveCommand}"
+                        Classes="PrimaryButton"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

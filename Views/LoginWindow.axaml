@@ -1,0 +1,258 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        d:DesignWidth="400"
+        d:DesignHeight="460"
+        x:Class="ExcelToSQLite.Views.LoginWindow"
+        Title="用户登录"
+        Width="400" 
+        Height="460"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False"
+        Background="#F0F4F8">
+    
+    <Window.Resources>
+        <!-- 蓝色调渐变 - 与主界面协调 -->
+        <LinearGradientBrush x:Key="HeaderGradient" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Offset="0" Color="#2196F3"/>
+            <GradientStop Offset="1" Color="#1976D2"/>
+        </LinearGradientBrush>
+        
+        <LinearGradientBrush x:Key="ButtonGradient" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Offset="0" Color="#2196F3"/>
+            <GradientStop Offset="1" Color="#1976D2"/>
+        </LinearGradientBrush>
+        
+        <LinearGradientBrush x:Key="ButtonHoverGradient" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Offset="0" Color="#1976D2"/>
+            <GradientStop Offset="1" Color="#0D47A1"/>
+        </LinearGradientBrush>
+
+        <!-- 阴影效果 -->
+        <DropShadowEffect x:Key="CardShadow" 
+                         Color="#00000020" 
+                         BlurRadius="20" 
+                         OffsetX="0" 
+                         OffsetY="8"/>
+        
+        <DropShadowEffect x:Key="InputFocusShadow" 
+                         Color="#2196F340" 
+                         BlurRadius="10" 
+                         OffsetX="0" 
+                         OffsetY="0"/>
+        
+        <DropShadowEffect x:Key="ButtonShadow" 
+                         Color="#2196F550" 
+                         BlurRadius="12" 
+                         OffsetX="0" 
+                         OffsetY="4"/>
+    </Window.Resources>
+
+    <!-- 主容器 -->
+    <Grid>
+        <!-- 装饰性背景 -->
+        <Border Background="{StaticResource HeaderGradient}" Opacity="0.08"/>
+        
+        <!-- 卡片容器 -->
+        <Border Margin="35,30,35,30"
+                Background="White"
+                CornerRadius="12"
+                Effect="{StaticResource CardShadow}">
+            <Grid Margin="30,35,30,30">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>      <!-- Logo -->
+                    <RowDefinition Height="Auto"/>      <!-- 标题 -->
+                    <RowDefinition Height="Auto"/>      <!-- 副标题 -->
+                    <RowDefinition Height="Auto"/>      <!-- 用户名 -->
+                    <RowDefinition Height="Auto"/>      <!-- 密码 -->
+                    <RowDefinition Height="Auto"/>      <!-- 登录按钮 -->
+                    <RowDefinition Height="36"/>        <!-- 错误提示 - 固定高度 -->
+                </Grid.RowDefinitions>
+
+                <!-- Logo/图标区域 -->
+                <Border Grid.Row="0"
+                        Width="70"
+                        Height="70"
+                        CornerRadius="35"
+                        Background="{StaticResource HeaderGradient}"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,12">
+                    <TextBlock Text="📊"
+                               FontSize="32"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                </Border>
+
+                <!-- 标题 -->
+                <TextBlock Grid.Row="1"
+                           Text="用户登录"
+                           FontSize="22"
+                           FontWeight="Bold"
+                           Foreground="#1A2332"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,4"/>
+                
+                <!-- 副标题 -->
+                <TextBlock Grid.Row="2"
+                           Text=""
+                           FontSize="13"
+                           Foreground="#6B7A8F"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,20"/>
+
+                <!-- 用户名输入 -->
+                <Grid Grid.Row="3" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <Border Grid.Column="0"
+                            Width="42"
+                            Height="42"
+                            CornerRadius="8 0 0 8"
+                            Background="#F5F8FA"
+                            BorderBrush="#DDE4EB"
+                            BorderThickness="1,1,0,1">
+                        <TextBlock Text="👤"
+                                   FontSize="16"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+                    
+                    <TextBox Grid.Column="1"
+                             Text="{Binding Username}"
+                             PlaceholderText="请输入用户名"
+                             FontSize="13"
+                             Height="42"
+                             BorderThickness="0,1,1,1"
+                             BorderBrush="#DDE4EB"
+                             Background="#F5F8FA"
+                             CornerRadius="0 8 8 0"
+                             Padding="12,0"
+                             VerticalContentAlignment="Center">
+                        <TextBox.Styles>
+                            <Style Selector="TextBox:focus">
+                                <Setter Property="BorderBrush" Value="#2196F3"/>
+                                <Setter Property="Background" Value="White"/>
+                                <Setter Property="Effect" Value="{StaticResource InputFocusShadow}"/>
+                            </Style>
+                        </TextBox.Styles>
+                    </TextBox>
+                </Grid>
+
+                <!-- 密码输入 -->
+                <Grid Grid.Row="4" Margin="0,0,0,18">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <Border Grid.Column="0"
+                            Width="42"
+                            Height="42"
+                            CornerRadius="8 0 0 8"
+                            Background="#F5F8FA"
+                            BorderBrush="#DDE4EB"
+                            BorderThickness="1,1,0,1">
+                        <TextBlock Text="🔒"
+                                   FontSize="16"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+                    
+                    <TextBox Grid.Column="1"
+                             Text="{Binding Password}"
+                             PasswordChar="●"
+                             PlaceholderText="请输入密码"
+                             FontSize="13"
+                             Height="42"
+                             BorderThickness="0,1,1,1"
+                             BorderBrush="#DDE4EB"
+                             Background="#F5F8FA"
+                             CornerRadius="0 8 8 0"
+                             Padding="12,0"
+                             VerticalContentAlignment="Center">
+                        <TextBox.Styles>
+                            <Style Selector="TextBox:focus">
+                                <Setter Property="BorderBrush" Value="#2196F3"/>
+                                <Setter Property="Background" Value="White"/>
+                                <Setter Property="Effect" Value="{StaticResource InputFocusShadow}"/>
+                            </Style>
+                        </TextBox.Styles>
+                    </TextBox>
+                </Grid>
+
+                <!-- 登录按钮 -->
+                <Button Grid.Row="5"
+                        Content="登 录"
+                        HorizontalAlignment="Center"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Command="{Binding LoginCommand}"
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Height="44"
+                        Width="160"
+                        Background="{StaticResource ButtonGradient}"
+                        Foreground="White"
+                        CornerRadius="8"
+                        Effect="{StaticResource ButtonShadow}"
+                        Margin="0,0,0,12">
+                    <Button.Styles>
+                        <Style Selector="Button:pointerover">
+                            <Setter Property="Background" Value="{StaticResource ButtonHoverGradient}"/>
+                            <Setter Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="#2196F560" 
+                                                    BlurRadius="14" 
+                                                    OffsetX="0" 
+                                                    OffsetY="5"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                        <Style Selector="Button:pressed">
+                            <Setter Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="#2196F540" 
+                                                    BlurRadius="8" 
+                                                    OffsetX="0" 
+                                                    OffsetY="2"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Styles>
+                </Button>
+
+                <!-- 错误提示 - 使用 ErrorOpacity 控制显示，避免布局跳动 -->
+                <Border Grid.Row="6"
+                        Background="#FFF5F5"
+                        CornerRadius="6"
+                        Padding="10,6"
+                        Margin="0,0,0,8"
+                        BorderBrush="#FC8181"
+                        BorderThickness="1"
+                        Height="36"
+                        Opacity="{Binding ErrorOpacity}">
+                    <StackPanel Orientation="Horizontal" 
+                                Spacing="6" 
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="⚠️" 
+                                   FontSize="13" 
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding ErrorMessage}"
+                                   Foreground="#E53E3E"
+                                   FontSize="12"
+                                   FontWeight="Medium"
+                                   TextWrapping="Wrap"
+                                   VerticalAlignment="Center"
+                                   MaxWidth="240"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

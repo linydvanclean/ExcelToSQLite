@@ -1,0 +1,120 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="800"
+             d:DesignHeight="600"
+             x:Class="ExcelToSQLite.Views.DataManagementView">
+
+    <Border Background="White" CornerRadius="12" Padding="24">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto">
+            <!-- 标题 -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,8">
+                <TextBlock Text="🗄️" FontSize="28"/>
+                <StackPanel>
+                    <TextBlock Text="基础数据管理" FontSize="24" FontWeight="Bold" Foreground="#1A237E"/>
+                    <TextBlock Text="管理所有导入的数据表" FontSize="13" Foreground="#78909C" Opacity="0.8"/>
+                </StackPanel>
+                <Border Background="#E8EAF6" CornerRadius="12" Padding="8,2" VerticalAlignment="Center">
+                    <TextBlock Text="⚠️ 谨慎操作" FontSize="10" Foreground="#D32F2F" FontWeight="SemiBold"/>
+                </Border>
+            </StackPanel>
+
+            <!-- 统计信息 -->
+            <Border Grid.Row="1" Background="#F8F9FA" CornerRadius="8" Padding="16" BorderBrush="#E0E0E0" BorderThickness="1"
+                    Margin="0,0,0,8">
+                <Grid ColumnDefinitions="*, *, *, *">
+                    <Border Background="#E3F2FD" CornerRadius="8" Padding="12" Margin="0,0,5,0">
+                        <StackPanel><TextBlock Text="📊 数据表总数" FontSize="12" Foreground="#546E7A"/><TextBlock Text="{Binding TotalTables}" FontSize="24" FontWeight="Bold" Foreground="#1565C0"/></StackPanel>
+                    </Border>
+                    <Border Background="#E8F5E9" CornerRadius="8" Padding="12" Margin="5,0,5,0">
+                        <StackPanel><TextBlock Text="📝 总记录数" FontSize="12" Foreground="#546E7A"/><TextBlock Text="{Binding TotalRecords}" FontSize="24" FontWeight="Bold" Foreground="#2E7D32"/></StackPanel>
+                    </Border>
+                    <Border Background="#FFF3E0" CornerRadius="8" Padding="12" Margin="5,0,5,0">
+                        <StackPanel><TextBlock Text="📂 系统表" FontSize="12" Foreground="#546E7A"/><TextBlock Text="2" FontSize="24" FontWeight="Bold" Foreground="#E65100"/></StackPanel>
+                    </Border>
+                    <Border Background="#FCE4EC" CornerRadius="8" Padding="12" Margin="5,0,0,0">
+                        <StackPanel><TextBlock Text="⚠️ 用户表" FontSize="12" Foreground="#546E7A"/><TextBlock Text="{Binding UserTables}" FontSize="24" FontWeight="Bold" Foreground="#C62828"/></StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- 操作按钮 -->
+            <Border Grid.Row="2" Background="#FFF8E1" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <Button Content="🔄 刷新列表" Command="{Binding RefreshCommand}" Classes="InfoButton"/>
+                    <Button Content="🗑️ 删除所有用户表" Command="{Binding DeleteAllTablesCommand}" Classes="DangerButton" IsEnabled="{Binding HasTables}"/>
+                    <Button Content="🧹 清除所有用户数据" Command="{Binding ClearAllDataCommand}" Classes="WarningButton" IsEnabled="{Binding HasTables}"/>
+                    <Button Content="📊 统计信息" Command="{Binding ShowStatisticsCommand}" Classes="InfoButton"/>
+                    <Border Background="#BBDEFB" Width="1" Margin="6,2"/>
+                    <TextBlock Text="🔍 筛选：" FontSize="13" FontWeight="SemiBold" Foreground="#1565C0" VerticalAlignment="Center"/>
+                    <TextBox Text="{Binding SearchKeyword}" Watermark="输入表名关键字筛选..." Width="200" Height="30" FontSize="12"/>
+                    <TextBlock Text="⚠️ 删除操作不可恢复！" FontSize="12" Foreground="#D32F2F" VerticalAlignment="Center" FontWeight="SemiBold" Margin="10,0,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 列表标题 -->
+            <Grid Grid.Row="3" ColumnDefinitions="*, Auto" Margin="0,4,0,0">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="📋" FontSize="18"/>
+                    <TextBlock Text="数据表列表" FontWeight="SemiBold" FontSize="16" Foreground="#1A237E"/>
+                </StackPanel>
+                <Border Background="#E8EAF6" CornerRadius="12" Padding="12,4">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="📊" FontSize="12"/>
+                        <TextBlock Text="{Binding FilteredTables.Count, StringFormat='共 {0} 个表'}" FontSize="12" Foreground="#3949AB" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- 列表表头 -->
+            <Border Grid.Row="4" Background="#EEF2F7" CornerRadius="8" Padding="12,10" Margin="0,4,0,0">
+                <Grid ColumnDefinitions="Auto, 1.5*, *, 150, 280">
+                    <TextBlock Grid.Column="0" Text="#" FontWeight="Bold" FontSize="12" Foreground="#37474F" Width="40"/>
+                    <TextBlock Grid.Column="1" Text="📝 表名" FontWeight="Bold" FontSize="12" Foreground="#37474F"/>
+                    <TextBlock Grid.Column="2" Text="📊 记录数" FontWeight="Bold" FontSize="12" Foreground="#37474F" TextAlignment="Center"/>
+                    <TextBlock Grid.Column="3" Text="📅 创建时间" FontWeight="Bold" FontSize="12" Foreground="#37474F"/>
+                    <TextBlock Grid.Column="4" Text="⚙️ 操作" FontWeight="Bold" FontSize="12" Foreground="#37474F" TextAlignment="Center"/>
+                </Grid>
+            </Border>
+
+            <!-- ListBox 填满剩余空间 - 可滚动 -->
+            <ScrollViewer Grid.Row="5" BorderThickness="1" BorderBrush="#E0E0E0" CornerRadius="8" Margin="0,4,0,0">
+                <ListBox x:Name="TablesListBox" ItemsSource="{Binding FilteredTables}" Background="White" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="8,6">
+                                <Grid ColumnDefinitions="40, 1.5*, *, 150, 280">
+                                    <TextBlock Grid.Column="0" Text="{Binding Index}" VerticalAlignment="Center" FontSize="12" Foreground="#78909C" TextAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding TableName}" VerticalAlignment="Center" FontSize="13" Foreground="#1A237E"/>
+                                    <Border Grid.Column="2" Background="{Binding RecordCountColor}" CornerRadius="12" Padding="10,3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding RecordCount}" FontSize="12" Foreground="White" FontWeight="SemiBold"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="3" Text="{Binding CreatedAt, StringFormat='yyyy-MM-dd HH:mm'}" VerticalAlignment="Center" FontSize="12" Foreground="#78909C"/>
+                                    <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Button Command="{Binding DataContext.RenameTableCommand, ElementName=TablesListBox}" CommandParameter="{Binding}" Classes="InfoButton" FontSize="11" Padding="10,4" Width="75">
+                                            <StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="✏️" FontSize="12"/><TextBlock Text="重命名" FontSize="11"/></StackPanel>
+                                        </Button>
+                                        <Button Command="{Binding DataContext.DeleteTableCommand, ElementName=TablesListBox}" CommandParameter="{Binding}" Classes="DangerButton" FontSize="11" Padding="10,4" Width="75">
+                                            <StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="🗑️" FontSize="12"/><TextBlock Text="删除表" FontSize="11"/></StackPanel>
+                                        </Button>
+                                        <Button Command="{Binding DataContext.ClearTableCommand, ElementName=TablesListBox}" CommandParameter="{Binding}" Classes="WarningButton" FontSize="11" Padding="10,4" Width="85">
+                                            <StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="🧹" FontSize="12"/><TextBlock Text="清空记录" FontSize="11"/></StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </ScrollViewer>
+
+            <!-- 状态栏 -->
+            <Border Grid.Row="6" CornerRadius="6" Padding="10,6" Margin="0,6,0,0" Opacity="0.95"
+                    Background="{Binding StatusColor}" IsVisible="{Binding ShowStatus}">
+                <TextBlock Text="{Binding StatusMessage}" Foreground="White" FontSize="12" TextWrapping="Wrap" VerticalAlignment="Center"/>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

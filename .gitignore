@@ -1,0 +1,5 @@
+echo "# C# 项目忽略文件" > .gitignore
+echo "obj/" >> .gitignore
+echo "bin/" >> .gitignore
+echo "*.user" >> .gitignore
+echo "*.suo" >> .gitignore

@@ -1,0 +1,379 @@
+<!-- Views/DbTablesView.axaml -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:converters="clr-namespace:ExcelToSQLite.Converters"
+             mc:Ignorable="d"
+             d:DesignWidth="1200"
+             d:DesignHeight="800"
+             x:Class="ExcelToSQLite.Views.DbTablesView">
+
+    <UserControl.Styles>
+        <!-- 刷新按钮样式 -->
+        <Style Selector="Button.InfoButton">
+            <Setter Property="Background" Value="#E3F2FD"/>
+            <Setter Property="Foreground" Value="#0D47A1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        
+        <Style Selector="Button.InfoButton:pointerover">
+            <Setter Property="Background" Value="#BBDEFB"/>
+        </Style>
+
+        <!-- 预览按钮样式 -->
+        <Style Selector="Button.PreviewButton">
+            <Setter Property="Background" Value="#1976D2"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        
+        <Style Selector="Button.PreviewButton:pointerover">
+            <Setter Property="Background" Value="#1565C0"/>
+        </Style>
+        
+        <Style Selector="Button.PreviewButton:disabled">
+            <Setter Property="Background" Value="#B0BEC5"/>
+            <Setter Property="Cursor" Value="Arrow"/>
+        </Style>
+
+        <!-- 导出按钮样式 -->
+        <Style Selector="Button.SuccessButton">
+            <Setter Property="Background" Value="#2E7D32"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        
+        <Style Selector="Button.SuccessButton:pointerover">
+            <Setter Property="Background" Value="#1B5E20"/>
+        </Style>
+        
+        <Style Selector="Button.SuccessButton:disabled">
+            <Setter Property="Background" Value="#B0BEC5"/>
+            <Setter Property="Cursor" Value="Arrow"/>
+        </Style>
+
+        <!-- 列表项样式 -->
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="ListBoxItem:pointerover">
+            <Setter Property="Background" Value="#E3F2FD"/>
+        </Style>
+
+        <Style Selector="ListBoxItem:selected">
+            <Setter Property="Background" Value="#BBDEFB"/>
+            <Setter Property="Foreground" Value="#1A237E"/>
+        </Style>
+
+        <!-- 状态边框样式 -->
+        <Style Selector="Border.StatusBorder">
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Opacity" Value="0.9"/>
+        </Style>
+
+        <Style Selector="Border.StatusBorder TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <!-- 信息卡片样式 -->
+        <Style Selector="Border.InfoCard">
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Background" Value="#F5F5F5"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="White" CornerRadius="12" Padding="20">
+        <Grid RowDefinitions="Auto,*,Auto">
+
+            <!-- 标题 -->
+            <StackPanel Grid.Row="0" Spacing="5" Margin="0,0,0,12">
+                <TextBlock Text="📊 数据预览与导出"
+                           FontWeight="Bold"
+                           FontSize="18"
+                           Foreground="#1A237E"/>
+                <TextBlock Text="查看数据库所有表，点击预览查看前10000条数据，点击导出下载全部数据到Excel"
+                           FontSize="12"
+                           Foreground="#78909C"/>
+            </StackPanel>
+
+            <!-- 主内容区域 -->
+            <Grid Grid.Row="1" ColumnDefinitions="350,*">
+
+                <!-- 左侧 - 表列表 -->
+                <Border Grid.Column="0"
+                        Background="#F5F5F5"
+                        CornerRadius="8"
+                        Padding="12"
+                        Margin="0,0,12,0">
+                    <Grid RowDefinitions="Auto,Auto,Auto,*">
+                        <!-- 工具栏 -->
+                        <StackPanel Grid.Row="0"
+                                    Orientation="Horizontal"
+                                    Spacing="8"
+                                    Margin="0,0,0,10">
+                            <Button Content="🔄 刷新"
+                                    Command="{Binding RefreshCommand}"
+                                    Classes="InfoButton"
+                                    FontSize="12"
+                                    Padding="8,5"/>
+                            <TextBlock Text="{Binding TableNames.Count}"
+                                       FontSize="12"
+                                       Foreground="#78909C"
+                                       VerticalAlignment="Center"
+                                       Margin="5,0,0,0"/>
+                            <TextBlock Text="个表"
+                                       FontSize="12"
+                                       Foreground="#78909C"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- 搜索框 -->
+                        <TextBox Grid.Row="1"
+                                 Watermark="🔍 搜索表名..."
+                                 Text="{Binding SearchText}"
+                                 Margin="0,0,0,10"
+                                 FontSize="13"/>
+
+                        <!-- 状态提示 -->
+                        <TextBlock Grid.Row="2"
+                                   Text="⏳ 加载中..."
+                                   FontSize="12"
+                                   Foreground="#78909C"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,8"
+                                   IsVisible="{Binding IsLoadingTables}"/>
+
+                        <!-- 表列表 -->
+                        <ScrollViewer Grid.Row="3">
+                            <ListBox ItemsSource="{Binding FilteredTableNames}"
+                                     SelectedItem="{Binding SelectedTable}"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     IsEnabled="{Binding !IsLoadingTables}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0"
+                                                       Text="📋"
+                                                       FontSize="14"
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,8,0"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding}"
+                                                       FontSize="13"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip.Tip="{Binding}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+
+                <!-- 右侧 - 表信息与操作 -->
+                <Border Grid.Column="1"
+                        Background="White"
+                        CornerRadius="8"
+                        BorderBrush="#E0E0E0"
+                        BorderThickness="1"
+                        Padding="20">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        
+                        <!-- 选中表信息 -->
+                        <StackPanel Grid.Row="0" Spacing="10">
+                            <TextBlock Text="📋 表信息"
+                                       FontWeight="Bold"
+                                       FontSize="14"
+                                       Foreground="#1A237E"/>
+                            
+                            <!-- 空状态 -->
+                            <Border Background="#FAFAFA"
+                                    CornerRadius="6"
+                                    Padding="12"
+                                    IsVisible="{Binding SelectedTable, Converter={StaticResource StringToBoolConverter}, ConverterParameter=Invert}">
+                                <TextBlock Text="请从左侧选择表"
+                                           FontSize="13"
+                                           Foreground="#78909C"
+                                           HorizontalAlignment="Center"/>
+                            </Border>
+                            
+                            <!-- 表信息 -->
+                            <Border Background="#F5F5F5"
+                                    CornerRadius="6"
+                                    Padding="12"
+                                    IsVisible="{Binding SelectedTable, Converter={StaticResource StringToBoolConverter}}">
+                                <StackPanel Spacing="6">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <TextBlock Grid.Column="0" 
+                                                   Text="表名：" 
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#424242"
+                                                   Width="60"/>
+                                        <TextBlock Grid.Column="1" 
+                                                   Text="{Binding SelectedTable}"
+                                                   Foreground="#1A237E"
+                                                   FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <TextBlock Grid.Column="0" 
+                                                   Text="记录数：" 
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#424242"
+                                                   Width="60"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                            <TextBlock Text="{Binding TotalCount}"
+                                                       Foreground="#E65100"
+                                                       FontWeight="SemiBold"/>
+                                            <TextBlock Text=" 条"
+                                                       Foreground="#78909C"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <TextBlock Grid.Column="0" 
+                                                   Text="状态：" 
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#424242"
+                                                   Width="60"/>
+                                        <TextBlock Grid.Column="1" 
+                                                   Text="{Binding TableInfo}"
+                                                   Foreground="#78909C"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- 操作按钮 -->
+                        <StackPanel Grid.Row="1"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Center"
+                                    Spacing="15">
+                            <TextBlock Text="📌 数据操作"
+                                       FontWeight="SemiBold"
+                                       FontSize="13"
+                                       Foreground="#1A237E"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,5"/>
+                            
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="15">
+                                <Button Grid.Column="0"
+                                        Content="👁️ 预览前10000条"
+                                        Command="{Binding PreviewCommand}"
+                                        Classes="PreviewButton"
+                                        Width="180"
+                                        Padding="16,10"
+                                        IsEnabled="{Binding SelectedTable, Converter={StaticResource StringToBoolConverter}}"/>
+                                
+                                <Button Grid.Column="1"
+                                        Content="📥 导出全部数据"
+                                        Command="{Binding ExportCommand}"
+                                        Classes="SuccessButton"
+                                        Width="180"
+                                        Padding="16,10"
+                                        IsEnabled="{Binding SelectedTable, Converter={StaticResource StringToBoolConverter}}"/>
+                            </Grid>
+                            
+                            <TextBlock Text="💡 预览将打开新窗口显示数据，导出将下载全部数据到Excel文件"
+                                       FontSize="11"
+                                       Foreground="#B0BEC5"
+                                       HorizontalAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- 统计信息 -->
+                        <Border Grid.Row="2"
+                                Classes="InfoCard"
+                                Margin="0,12,0,0">
+                            <Grid ColumnDefinitions="*,*,*">
+                                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                    <TextBlock Text="总表数"
+                                               FontSize="10"
+                                               Foreground="#78909C"/>
+                                    <TextBlock Text="{Binding TableNames.Count}"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               Foreground="#0D47A1"/>
+                                </StackPanel>
+                                <Border Grid.Column="1" 
+                                        Background="#E0E0E0" 
+                                        Width="1" 
+                                        Margin="5,0"/>
+                                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                    <TextBlock Text="已选择"
+                                               FontSize="10"
+                                               Foreground="#78909C"/>
+                                    <TextBlock Text="{Binding SelectedTable}"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Foreground="#1B5E20"
+                                               TextTrimming="CharacterEllipsis"
+                                               MaxWidth="80"/>
+                                </StackPanel>
+                                <Border Grid.Column="2" 
+                                        Background="#E0E0E0" 
+                                        Width="1" 
+                                        Margin="5,0"/>
+                                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                    <TextBlock Text="记录数"
+                                               FontSize="10"
+                                               Foreground="#78909C"/>
+                                    <TextBlock Text="{Binding TotalCount}"
+                                               FontSize="14"
+                                               FontWeight="Bold"
+                                               Foreground="#E65100"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- 状态栏 -->
+            <Border Grid.Row="2"
+                    Background="{Binding StatusColor}"
+                    CornerRadius="6"
+                    Padding="12,6"
+                    Margin="0,12,0,0"
+                    IsVisible="{Binding ShowStatus}">
+                <DockPanel>
+                    <TextBlock Text="{Binding StatusMessage}"
+                               FontSize="12"
+                               Foreground="White"/>
+                    <TextBlock DockPanel.Dock="Right"
+                               Text="{Binding SelectedTable, StringFormat='📋 {0}'}"
+                               FontSize="11"
+                               Foreground="White"
+                               Opacity="0.8"
+                               IsVisible="{Binding SelectedTable, Converter={StaticResource StringToBoolConverter}}"/>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

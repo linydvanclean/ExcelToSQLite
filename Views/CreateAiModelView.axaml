@@ -1,0 +1,262 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:converters="clr-namespace:ExcelToSQLite.Converters"
+             mc:Ignorable="d"
+             d:DesignWidth="900"
+             d:DesignHeight="750"
+             x:Class="ExcelToSQLite.Views.CreateAiModelView">
+
+    <Border Background="White" CornerRadius="12" Padding="20">
+        <DockPanel>
+            <!-- 主内容区域 -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="12">
+
+                    <!-- ========== 标题区域 ========== -->
+                    <Border Background="#F3E5F5"
+                            CornerRadius="8"
+                            Padding="16,12">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="🤖" FontSize="32" VerticalAlignment="Center"/>
+                            <StackPanel>
+                                <TextBlock Text="AI建模 - 智能SQL生成"
+                                           FontSize="22"
+                                           FontWeight="Bold"
+                                           Foreground="#4A148C"/>
+                                <TextBlock Text="通过自然语言描述，AI自动理解需求并生成分析SQL查询语句"
+                                           FontSize="12"
+                                           Foreground="#7B1FA2"
+                                           Opacity="0.8"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ========== 表单区域 ========== -->
+                    <Border Background="#F8F9FA"
+                            CornerRadius="8"
+                            Padding="14,10"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1">
+                        <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto">
+                            <TextBlock Grid.Row="0" Grid.Column="0"
+                                       VerticalAlignment="Center"
+                                       Foreground="#546E7A"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Margin="0,6,16,6">📝 指标名称</TextBlock>
+                            <TextBox Grid.Row="0" Grid.Column="1"
+                                     Text="{Binding IndicatorName}"
+                                     PlaceholderText="请输入指标名称..."
+                                     Height="34"
+                                     Margin="0,4,0,4"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0"
+                                       VerticalAlignment="Center"
+                                       Foreground="#546E7A"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Margin="0,6,16,6">📂 分类</TextBlock>
+                            <ComboBox Grid.Row="1" Grid.Column="1"
+                                      ItemsSource="{Binding CategoryOptions}"
+                                      SelectedItem="{Binding IndicatorCategory}"
+                                      Height="34"
+                                      Margin="0,4,0,4"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- ========== 数据库表选择 ========== -->
+                    <Border Background="#F8F9FA"
+                            CornerRadius="8"
+                            Padding="14,10"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1">
+                        <StackPanel Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="🗄️ 数据库表选择"
+                                           FontWeight="SemiBold"
+                                           Foreground="#1A237E"
+                                           FontSize="13"
+                                           VerticalAlignment="Center"/>
+                                <Border Background="#E8EAF6"
+                                        CornerRadius="10"
+                                        Padding="8,2"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Tables.Count, StringFormat='共 {0} 个表'}"
+                                               FontSize="10"
+                                               Foreground="#3949AB"/>
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Button Content="☑ 全选"
+                                        Command="{Binding SelectAllTablesCommand}"
+                                        Classes="SmallButton"/>
+                                <Button Content="☐ 清空"
+                                        Command="{Binding ClearTableSelectionCommand}"
+                                        Classes="SmallButton"/>
+                                <Button Content="🔄 刷新"
+                                        Command="{Binding RefreshTablesCommand}"
+                                        Classes="InfoButton"
+                                        FontSize="11"
+                                        Padding="8,4"/>
+                            </StackPanel>
+
+                            <ScrollViewer MaxHeight="180"
+                                          BorderThickness="1"
+                                          BorderBrush="#E0E0E0"
+                                          CornerRadius="4"
+                                          Background="White">
+                                <ItemsControl ItemsSource="{Binding Tables}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"
+                                                       Margin="8,4"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Content="{Binding TableName}"
+                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                      Margin="4,3"
+                                                      FontSize="12"
+                                                      MinWidth="160"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ========== 三标签页内容区域 ========== -->
+                    <StackPanel Spacing="6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="📝 内容编辑"
+                                       FontWeight="SemiBold"
+                                       Foreground="#1A237E"
+                                       FontSize="12"
+                                       VerticalAlignment="Center"/>
+                            <Border Background="#E8EAF6"
+                                    CornerRadius="10"
+                                    Padding="8,2"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="描述 → AI生成SQL → 查看/编辑SQL"
+                                           FontSize="10"
+                                           Foreground="#3949AB"/>
+                            </Border>
+                        </StackPanel>
+
+                        <TabControl SelectedIndex="{Binding SelectedTabIndex}"
+                                    Height="300">
+                            <TabItem Header="📝 指标描述">
+                                <Border BorderThickness="0" Padding="6">
+                                    <TextBox Text="{Binding IndicatorDescription}"
+                                             PlaceholderText="请用自然语言描述您的数据分析需求，AI将根据描述自动生成SQL...&#x0a;&#x0a;例如：&#x0a;统计各部门每月的经费使用总额，并按部门分组汇总"
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             FontSize="14"
+                                             Height="250"
+                                             VerticalAlignment="Stretch"/>
+                                </Border>
+                            </TabItem>
+
+                            <TabItem Header="📊 统计SQL">
+                                <Border BorderThickness="0" Padding="6">
+                                    <TextBox Text="{Binding IndicatorSqlStatement}"
+                                             PlaceholderText="AI生成的统计SQL将显示在这里..."
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             FontFamily="Consolas, Courier New, monospace"
+                                             FontSize="14"
+                                             Height="250"
+                                             VerticalAlignment="Stretch"/>
+                                </Border>
+                            </TabItem>
+
+                            <TabItem Header="📋 详细SQL">
+                                <Border BorderThickness="0" Padding="6">
+                                    <TextBox Text="{Binding IndicatorSqlDetailData}"
+                                             PlaceholderText="AI生成的详细SQL将显示在这里..."
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             FontFamily="Consolas, Courier New, monospace"
+                                             FontSize="14"
+                                             Height="250"
+                                             VerticalAlignment="Stretch"/>
+                                </Border>
+                            </TabItem>
+                        </TabControl>
+                    </StackPanel>
+
+                    <!-- ========== AI操作按钮 + 提示信息横向布局 ========== -->
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Button Content="🚀 提交AI分析"
+                                Command="{Binding SubmitToAiCommand}"
+                                Classes="AiSubmitButton"
+                                IsEnabled="{Binding IsAnalyzing, Converter={StaticResource InvertBoolConverter}}"/>
+                        <Button Content="📋 生成合成提示词"
+                                Command="{Binding CopyPromptCommand}"
+                                Classes="InfoButton">
+                            <ToolTip.Tip>
+                                <ToolTip Content="生成完整提示词（含表结构），可复制到DeepSeek网页端使用"/>
+                            </ToolTip.Tip>
+                        </Button>
+                        <Button Content="🔍 数据预览"
+                                Command="{Binding PreviewCommand}"
+                                Classes="PreviewButton"/>
+                        <!-- 提示信息放在按钮右侧 -->
+                        <Border CornerRadius="6"
+                                Padding="10,6"
+                                Background="#FAFAFA"
+                                BorderBrush="#E0E0E0"
+                                BorderThickness="1"
+                                VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="📌 状态："
+                                           FontSize="11"
+                                           FontWeight="SemiBold"
+                                           Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding StatusMessage}"
+                                           FontSize="11"
+                                           Foreground="{Binding StatusColor}"
+                                           TextWrapping="Wrap"
+                                           MaxWidth="250"/>
+                                <TextBlock Text="⏳ 分析中..."
+                                           FontSize="11"
+                                           Foreground="#FF9800"
+                                           IsVisible="{Binding IsAnalyzing}"
+                                           FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ========== 进度日志 ========== -->
+                    <ScrollViewer Height="120"
+                                  IsVisible="{Binding ProgressLog.Count, Converter={StaticResource StringToBoolConverter}}">
+                        <ListBox ItemsSource="{Binding ProgressLog}"
+                                 Background="#263238"
+                                 Foreground="#B0BEC5"
+                                 BorderThickness="0"
+                                 FontFamily="Consolas, Courier New, monospace"
+                                 FontSize="11"/>
+                    </ScrollViewer>
+
+                    <!-- 底部按钮区域 -->
+                    <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right"
+                                Margin="0,8,0,0">
+                        <Button Content="➕ 新建指标"
+                                Command="{Binding NewIndicatorCommand}"
+                                Classes="InfoButton"
+                                IsEnabled="{Binding IsSaving, Converter={StaticResource InvertBoolConverter}}"/>
+                        <Button Content="💾 保存指标"
+                                Command="{Binding SaveCommand}"
+                                Classes="PrimaryButton"
+                                IsEnabled="{Binding IsSaving, Converter={StaticResource InvertBoolConverter}}"/>
+                    </StackPanel>
+
+                </StackPanel>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
+</UserControl>

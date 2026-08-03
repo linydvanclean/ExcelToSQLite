@@ -1,0 +1,252 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:data="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
+             xmlns:converters="clr-namespace:ExcelToSQLite.Converters"
+             x:Class="ExcelToSQLite.Views.DetailDataView">
+
+    <UserControl.Styles>
+        <!-- 导出数据按钮 - 蓝色 -->
+        <Style Selector="Button.ExportButton">
+            <Setter Property="Background" Value="#1976D2"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        
+        <Style Selector="Button.ExportButton:pointerover">
+            <Setter Property="Background" Value="#1565C0"/>
+        </Style>
+        
+        <!-- 关闭按钮 - 红色 -->
+        <Style Selector="Button.CloseButton">
+            <Setter Property="Background" Value="#E53935"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        
+        <Style Selector="Button.CloseButton:pointerover">
+            <Setter Property="Background" Value="#C62828"/>
+        </Style>
+        
+        <!-- 信息卡片样式 -->
+        <Style Selector="Border.InfoItem">
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        
+        <Style Selector="Border.InfoItem TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        
+        <!-- DataGrid 样式 -->
+        <Style Selector="data|DataGrid">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#E8E8E8"/>
+            <Setter Property="VerticalGridLinesBrush" Value="#E8E8E8"/>
+            <Setter Property="CanUserResizeColumns" Value="True"/>
+            <Setter Property="CanUserReorderColumns" Value="True"/>
+            <Setter Property="CanUserSortColumns" Value="True"/>
+            <Setter Property="SelectionMode" Value="Single"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="MinHeight" Value="100"/>
+            <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+        </Style>
+        
+        <!-- 使用样式实现交替行颜色 -->
+        <Style Selector="data|DataGridRow:even">
+            <Setter Property="Background" Value="#F8F9FA"/>
+        </Style>
+        
+        <Style Selector="data|DataGridRow:odd">
+            <Setter Property="Background" Value="White"/>
+        </Style>
+        
+        <!-- DataGrid 列头样式 -->
+        <Style Selector="data|DataGridColumnHeader">
+            <Setter Property="Background" Value="#E8EDF5"/>
+            <Setter Property="Foreground" Value="#1A237E"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="BorderBrush" Value="#C5CDD8"/>
+            <Setter Property="BorderThickness" Value="0,0,1,2"/>
+            <Setter Property="MinHeight" Value="44"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        </Style>
+        
+        <Style Selector="data|DataGridColumnHeader:pointerover">
+            <Setter Property="Background" Value="#D5DDE8"/>
+        </Style>
+        
+        <Style Selector="data|DataGridColumnHeader:active">
+            <Setter Property="Background" Value="#C5CDD8"/>
+        </Style>
+        
+        <!-- DataGrid 单元格样式 -->
+        <Style Selector="data|DataGridCell">
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="BorderBrush" Value="#E8E8E8"/>
+            <Setter Property="BorderThickness" Value="0,0,1,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#424242"/>
+            <Setter Property="MinWidth" Value="80"/>
+        </Style>
+        
+        <!-- DataGrid 行悬停样式 -->
+        <Style Selector="data|DataGridRow:pointerover /template/ data|DataGridCell">
+            <Setter Property="Background" Value="#E3F2FD"/>
+        </Style>
+        
+        <!-- DataGrid 行选中样式 -->
+        <Style Selector="data|DataGridRow:selected /template/ data|DataGridCell">
+            <Setter Property="Background" Value="#BBDEFB"/>
+            <Setter Property="Foreground" Value="#1A237E"/>
+        </Style>
+        
+        <!-- DataGrid 交替行悬停样式 -->
+        <Style Selector="data|DataGridRow:even:pointerover /template/ data|DataGridCell">
+            <Setter Property="Background" Value="#E3F2FD"/>
+        </Style>
+        
+        <!-- DataGrid 交替行选中样式 -->
+        <Style Selector="data|DataGridRow:even:selected /template/ data|DataGridCell">
+            <Setter Property="Background" Value="#BBDEFB"/>
+        </Style>
+        
+        <!-- 状态信息边框样式 -->
+        <Style Selector="Border.StatusBorder">
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Opacity" Value="0.9"/>
+        </Style>
+        
+        <Style Selector="Border.StatusBorder TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="White" CornerRadius="8" Padding="20">
+        <DockPanel>
+            <!-- 顶部区域 - 固定 -->
+            <StackPanel DockPanel.Dock="Top" Spacing="12">
+                <!-- 标题和操作按钮行 -->
+                <Grid ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto">
+                    <!-- 标题区域 -->
+                    <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Horizontal" Spacing="10">
+                        <TextBlock Text="📋" FontSize="28" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="详细数据：" 
+                                       FontSize="16" 
+                                       FontWeight="Bold"
+                                       Foreground="#1A237E"/>
+                            <TextBlock Text="{Binding IndicatorName}" 
+                                       FontSize="16"
+                                       Foreground="DarkRed"/>
+                        </StackPanel>
+                    </StackPanel>
+                    
+                    <!-- 操作按钮 -->
+                    <Button Grid.Column="1" Grid.Row="0" 
+                            Content="📥 导出" 
+                            Command="{Binding ExportCommand}"
+                            Classes="ExportButton"
+                            Margin="0,0,10,0"
+                            IsEnabled="{Binding IsLoading, Converter={StaticResource InvertBoolConverter}}"/>
+                    <Button Grid.Column="2" Grid.Row="0" 
+                            Content="✕ 关闭" 
+                            Command="{Binding CloseCommand}"
+                            Classes="CloseButton"/>
+                </Grid>
+
+                <!-- 信息卡片 -->
+                <WrapPanel Orientation="Horizontal" Margin="-6,0">
+                    <!-- 分类信息 -->
+                    <Border Background="#E3F2FD" Classes="InfoItem" Margin="6,4">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="📂" FontSize="14"/>
+                            <TextBlock Text="分类：" FontWeight="SemiBold" Foreground="#1A237E"/>
+                            <TextBlock Text="{Binding Category}" Foreground="#1565C0"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- 记录数 -->
+                    <Border Background="#E8F5E9" Classes="InfoItem" Margin="6,4">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="📊" FontSize="14"/>
+                            <TextBlock Text="记录数：" FontWeight="SemiBold" Foreground="#1A237E"/>
+                            <TextBlock Text="{Binding TotalCount}" Foreground="#2E7D32" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- 查询时间 -->
+                    <Border Background="#F5F5F5" Classes="InfoItem" Margin="6,4">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="🕐" FontSize="14"/>
+                            <TextBlock Text="查询时间：" FontWeight="SemiBold" Foreground="#1A237E"/>
+                            <TextBlock Text="{Binding QueryTime}" Foreground="#616161"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- 显示记录数 -->
+                    <Border Background="#FFF3E0" Classes="InfoItem" Margin="6,4"
+                            IsVisible="{Binding DisplayCount, Converter={StaticResource StringToBoolConverter}}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="👁️" FontSize="14"/>
+                            <TextBlock Text="显示：" FontWeight="SemiBold" Foreground="#1A237E"/>
+                            <TextBlock Text="{Binding DisplayCount}" Foreground="#E65100" FontWeight="SemiBold"/>
+                            <TextBlock Text="/" Foreground="#78909C"/>
+                            <TextBlock Text="{Binding TotalCount}" Foreground="#78909C"/>
+                        </StackPanel>
+                    </Border>
+                </WrapPanel>
+
+                <!-- 状态信息 -->
+                <Border Background="{Binding StatusColorBrush}"
+                        Classes="StatusBorder"
+                        IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}">
+                    <TextBlock Text="{Binding StatusMessage}"/>
+                </Border>
+            </StackPanel>
+
+            <!-- 数据表格 -->
+            <Border BorderThickness="1" 
+                    BorderBrush="#D0D7E0" 
+                    CornerRadius="8"
+                    Background="White"
+                    Margin="0,12,0,0">
+                <data:DataGrid x:Name="DataGrid"
+                               ItemsSource="{Binding TableData}"
+                               AutoGenerateColumns="False"
+                               CanUserResizeColumns="True"
+                               CanUserReorderColumns="True"
+                               CanUserSortColumns="True"
+                               SelectionMode="Single"
+                               IsReadOnly="True"
+                               HorizontalAlignment="Stretch"
+                               VerticalAlignment="Stretch"
+                               Margin="0"
+                               HorizontalScrollBarVisibility="Auto"
+                               VerticalScrollBarVisibility="Auto"
+                               MinColumnWidth="100"
+                               MaxColumnWidth="600"/>
+            </Border>
+        </DockPanel>
+    </Border>
+</UserControl>

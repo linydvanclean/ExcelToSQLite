@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:ExcelToSQLite.ViewModels"
+             xmlns:converters="clr-namespace:ExcelToSQLite.Converters"
+             x:Class="ExcelToSQLite.Views.ScanResultView"
+             x:DataType="viewModels:ScanResultViewModel">
+
+    <Border Background="White" CornerRadius="12" Padding="24">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto">
+            <!-- 标题 -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,8">
+                <TextBlock Text="📊" FontSize="28"/>
+                <StackPanel>
+                    <TextBlock Text="扫描结果查看" FontSize="24" FontWeight="Bold" Foreground="#1A237E"/>
+                    <TextBlock Text="查看各批次的扫描结果和详细数据" FontSize="13" Foreground="#78909C" Opacity="0.8"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- 选择批次 -->
+            <Grid Grid.Row="1" ColumnDefinitions="*, Auto" Margin="0,0,0,8">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="📋 选择批次：" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="14" Foreground="#1A237E"/>
+                    <ComboBox ItemsSource="{Binding Batches}" SelectedItem="{Binding SelectedBatch}"
+                              DisplayMemberBinding="{Binding Name}" Width="280"/>
+                </StackPanel>
+                <Button Grid.Column="1" Content="🔄 刷新" Command="{Binding RefreshCommand}" Classes="InfoButton"/>
+            </Grid>
+
+            <!-- 状态信息 -->
+            <Border Grid.Row="2" Background="{Binding StatusColor}" CornerRadius="8" Padding="12,8" Opacity="0.9"
+                    IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" Margin="0,0,0,8">
+                <TextBlock Text="{Binding StatusMessage}" Foreground="White" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Center"/>
+            </Border>
+
+            <!-- 列表表头 -->
+            <Border Grid.Row="3" Background="#EEF2F7" CornerRadius="8" Padding="12,10" Margin="0,0,0,4">
+                <Grid ColumnDefinitions="60, 150, *, 100, 100">
+                    <TextBlock Grid.Column="0" Text="#" FontWeight="Bold" FontSize="12" Foreground="#37474F" TextAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Text="指标分类" FontWeight="Bold" FontSize="12" Foreground="#1A237E"/>
+                    <TextBlock Grid.Column="2" Text="指标名称" FontWeight="Bold" FontSize="12" Foreground="#1A237E"/>
+                    <TextBlock Grid.Column="3" Text="结果数量" FontWeight="Bold" FontSize="12" Foreground="#1A237E" TextAlignment="Center"/>
+                    <TextBlock Grid.Column="4" Text="状态" FontWeight="Bold" FontSize="12" Foreground="#1A237E" TextAlignment="Center"/>
+                </Grid>
+            </Border>
+
+            <!-- 结果列表 填满剩余空间 -->
+            <ScrollViewer Grid.Row="4" BorderThickness="1" BorderBrush="#E0E0E0" CornerRadius="8">
+                <ListBox x:Name="ResultListBox" ItemsSource="{Binding ScanResults}" Background="White" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="12,8" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1">
+                                <Grid ColumnDefinitions="60, 150, *, 100, 100">
+                                    <TextBlock Grid.Column="0" Text="{Binding Index}" VerticalAlignment="Center" FontSize="12" Foreground="#78909C" TextAlignment="Center"/>
+
+                                    <Border Grid.Column="1" Background="{Binding Category, Converter={StaticResource CategoryColorConverter}}"
+                                            CornerRadius="4" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Category}" FontSize="11" Foreground="White" FontWeight="SemiBold"/>
+                                    </Border>
+
+                                    <TextBlock Grid.Column="2" Text="{Binding IndicatorName}" VerticalAlignment="Center"
+                                               FontSize="13" FontWeight="SemiBold" Foreground="#1A237E" TextTrimming="CharacterEllipsis"/>
+
+                                    <TextBlock Grid.Column="3" Text="{Binding RowCount}" VerticalAlignment="Center"
+                                               FontSize="13" Foreground="#1565C0" TextAlignment="Center" FontWeight="SemiBold"/>
+
+                                    <TextBlock Grid.Column="4" Text="{Binding StatusDisplay}" VerticalAlignment="Center"
+                                               FontSize="12" Foreground="{Binding StatusColor}" TextAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </ScrollViewer>
+
+            <!-- 底部提示 -->
+            <Border Grid.Row="5" Background="#FFF8E1" CornerRadius="8" Padding="12,8" Margin="0,6,0,0">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock Text="💡" FontSize="16"/>
+                    <TextBlock Text="双击列表项可查看详细数据" FontSize="12" Foreground="#795548"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

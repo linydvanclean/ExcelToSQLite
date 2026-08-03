@@ -1,0 +1,114 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="900"
+             d:DesignHeight="700"
+             x:Class="ExcelToSQLite.Views.TableFieldManagementView">
+
+    <Border Background="White" CornerRadius="12" Padding="20">
+        <Grid RowDefinitions="Auto,*,Auto">
+
+            <!-- 标题 -->
+            <StackPanel Grid.Row="0" Spacing="5" Margin="0,0,0,12">
+                <TextBlock Text="🗄️ 数据库表字段管理"
+                           FontWeight="Bold"
+                           FontSize="18"
+                           Foreground="#1A237E"/>
+                <TextBlock Text="修改数据库表字段名称，支持重复字段自动处理"
+                           FontSize="12"
+                           Foreground="#78909C"/>
+            </StackPanel>
+
+            <!-- 主内容 -->
+            <Grid Grid.Row="1" ColumnDefinitions="300,*,Auto">
+
+                <!-- 左侧表列表 -->
+                <Border Grid.Column="0" Background="#F5F5F5" CornerRadius="6" Padding="10" Margin="0,0,10,0">
+                    <Grid RowDefinitions="Auto,Auto,*">
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,10">
+                            <Button Content="🔄 刷新" Command="{Binding RefreshCommand}" Classes="InfoButton" FontSize="12" Padding="8,5"/>
+                            <TextBlock Text="{Binding TableNames.Count}" FontSize="12" Foreground="#78909C" VerticalAlignment="Center"/>
+                            <TextBlock Text="个表" FontSize="12" Foreground="#78909C" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBox Grid.Row="1" Watermark="🔍 搜索表名..." Text="{Binding SearchText}" Margin="0,0,0,10" FontSize="13"/>
+                        <ScrollViewer Grid.Row="2">
+                            <ListBox ItemsSource="{Binding FilteredTableNames}" SelectedItem="{Binding SelectedTable}" BorderThickness="0" Background="Transparent" IsEnabled="{Binding !IsLoading}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="📋" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </ScrollViewer>
+                        <TextBlock Grid.Row="2" Text="⏳ 加载中..." FontSize="12" Foreground="#78909C" HorizontalAlignment="Center" Margin="0,10,0,0" IsVisible="{Binding IsLoading}"/>
+                    </Grid>
+                </Border>
+
+                <!-- 右侧字段管理 -->
+                <Border Grid.Column="1" Background="White" CornerRadius="6" BorderBrush="#E0E0E0" BorderThickness="1" Padding="0">
+                    <Grid RowDefinitions="Auto,Auto,*">
+                        <!-- 工具栏 -->
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="10,8,10,5">
+                            <Button Content="📋 复制全部" Command="{Binding CopyFieldInfoCommand}" Classes="PrimaryButton" FontSize="12" Padding="8,5"/>
+                            <Button Content="✏️ 管理字段" Command="{Binding StartEditFieldsCommand}" Classes="InfoButton" FontSize="12" Padding="8,5" IsEnabled="{Binding IsTableSelected}"/>
+                            <Button Content="💾 保存修改" Command="{Binding SaveFieldChangesCommand}" Classes="SuccessButton" FontSize="12" Padding="8,5" IsEnabled="{Binding IsEditingFields}"/>
+                            <Button Content="❌ 取消编辑" Command="{Binding CancelEditFieldsCommand}" Classes="DangerButton" FontSize="12" Padding="8,5" IsEnabled="{Binding IsEditingFields}"/>
+                            <TextBlock Text="{Binding SelectedTable}" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="#1A237E" Margin="10,0,0,0"/>
+                        </StackPanel>
+
+                        <!-- 编辑提示 -->
+                        <Border Grid.Row="1" Background="#FFF3E0" CornerRadius="4" Padding="8,4" Margin="10,0,10,5" IsVisible="{Binding IsEditingFields}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="✏️" FontSize="14"/>
+                                <TextBlock Text="编辑模式：直接修改字段名称，重复字段名将自动添加序号后缀。完成后点击「💾 保存修改」" FontSize="11" Foreground="#E65100"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 字段列表 -->
+                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                            <ListBox x:Name="FieldListBox" ItemsSource="{Binding EditableFields}" BorderThickness="0" Background="White">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="4,2" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1">
+                                            <Grid ColumnDefinitions="40, *">
+                                                <TextBlock Grid.Column="0" Text="{Binding Ordinal}" FontSize="12" VerticalAlignment="Center" Foreground="#78909C" TextAlignment="Center"/>
+                                                <TextBox Grid.Column="1" Text="{Binding FieldName, Mode=TwoWay}" FontFamily="Consolas, Courier New, monospace" FontSize="14" IsReadOnly="{Binding IsReadOnly}" Padding="6,4" Margin="4,0"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+
+                <!-- 右侧统计 -->
+                <Border Grid.Column="2" Background="#F5F5F5" CornerRadius="6" Padding="10" Margin="10,0,0,0" Width="120">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="📊 统计" FontWeight="Bold" FontSize="12" Foreground="#1A237E"/>
+                        <Border Background="#E3F2FD" CornerRadius="4" Padding="8">
+                            <StackPanel><TextBlock Text="总表数" FontSize="10" Foreground="#78909C"/><TextBlock Text="{Binding TableNames.Count}" FontSize="16" FontWeight="Bold" Foreground="#0D47A1"/></StackPanel>
+                        </Border>
+                        <Border Background="#E8F5E9" CornerRadius="4" Padding="8">
+                            <StackPanel><TextBlock Text="已选择" FontSize="10" Foreground="#78909C"/><TextBlock Text="{Binding SelectedTable}" FontSize="12" FontWeight="SemiBold" Foreground="#1B5E20" TextTrimming="CharacterEllipsis"/></StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- 状态栏 -->
+            <Border Grid.Row="2" Background="{Binding StatusColor}" CornerRadius="6" Padding="10,5" Margin="0,12,0,0" IsVisible="{Binding ShowStatus}">
+                <DockPanel>
+                    <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="White"/>
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding SelectedTable, StringFormat='📋 {0}'}" FontSize="11" Foreground="White" Opacity="0.8"/>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

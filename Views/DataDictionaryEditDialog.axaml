@@ -1,0 +1,169 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        d:DesignWidth="580"
+        d:DesignHeight="480"
+        x:Class="ExcelToSQLite.Views.DataDictionaryEditDialog"
+        Title="{Binding DialogTitle}"
+        Width="580"
+        Height="480"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="White">
+
+    <Window.Styles>
+        <Style Selector="Button.PrimaryButton">
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="MinWidth" Value="90"/>
+        </Style>
+        <Style Selector="Button.PrimaryButton:pointerover">
+            <Setter Property="Background" Value="#43A047"/>
+        </Style>
+
+        <Style Selector="Button.DangerButton">
+            <Setter Property="Background" Value="#D32F2F"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="MinWidth" Value="90"/>
+        </Style>
+        <Style Selector="Button.DangerButton:pointerover">
+            <Setter Property="Background" Value="#C62828"/>
+        </Style>
+
+        <Style Selector="Button.InfoButton">
+            <Setter Property="Background" Value="#2196F3"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style Selector="Button.InfoButton:pointerover">
+            <Setter Property="Background" Value="#1976D2"/>
+        </Style>
+
+        <Style Selector="TextBox">
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#D0D0D0"/>
+        </Style>
+        <Style Selector="TextBox:focus">
+            <Setter Property="BorderBrush" Value="#2196F3"/>
+        </Style>
+
+        <Style Selector="Separator">
+            <Setter Property="Background" Value="#E0E0E0"/>
+            <Setter Property="Height" Value="1"/>
+        </Style>
+    </Window.Styles>
+
+    <Border Background="White" CornerRadius="10" Padding="24,20">
+        <StackPanel Spacing="16">
+
+            <!-- ========== 标题区域 ========== -->
+            <StackPanel Orientation="Horizontal" Spacing="14">
+                <Border Background="#E3F2FD"
+                        CornerRadius="8"
+                        Width="44"
+                        Height="44"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="📚"
+                               FontSize="22"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding DialogTitle}"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="#1A237E"/>
+                    <TextBlock Text="填写数据字典信息，定义数据表结构"
+                               FontSize="12"
+                               Foreground="#78909C"
+                               Opacity="0.8"/>
+                </StackPanel>
+            </StackPanel>
+
+            <Separator Margin="0,4,0,0"/>
+
+            <!-- ========== 表单区域 ========== -->
+            <Grid ColumnDefinitions="110, *" RowDefinitions="Auto, Auto, Auto" Margin="0,4,0,0">
+
+                <!-- 字典名称 -->
+                <TextBlock Grid.Row="0" Grid.Column="0"
+                           Text="📝 字典名称"
+                           FontWeight="SemiBold"
+                           Foreground="#37474F"
+                           VerticalAlignment="Center"
+                           FontSize="13"
+                           Margin="0,4,0,4"/>
+                <TextBox Grid.Row="0" Grid.Column="1"
+                         Text="{Binding Name}"
+                         PlaceholderText="请输入数据字典名称"
+                         Height="36"
+                         Margin="0,4,0,4"/>
+
+                <!-- 数据表名 -->
+                <TextBlock Grid.Row="1" Grid.Column="0"
+                           Text="🗄️ 数据表名"
+                           FontWeight="SemiBold"
+                           Foreground="#37474F"
+                           VerticalAlignment="Center"
+                           FontSize="13"
+                           Margin="0,4,0,4"/>
+                <TextBox Grid.Row="1" Grid.Column="1"
+                         Text="{Binding TableName}"
+                         PlaceholderText="请输入数据表名（仅字母、数字、下划线）"
+                         Height="36"
+                         Margin="0,4,0,4"/>
+
+                <!-- 描述 -->
+                <TextBlock Grid.Row="2" Grid.Column="0"
+                           Text="📋 描述"
+                           FontWeight="SemiBold"
+                           Foreground="#37474F"
+                           VerticalAlignment="Top"
+                           FontSize="13"
+                           Margin="0,8,0,4"/>
+                <TextBox Grid.Row="2" Grid.Column="1"
+                         Text="{Binding Description}"
+                         PlaceholderText="请输入描述信息（可选）"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         Height="70"
+                         Margin="0,4,0,4"/>
+            </Grid>
+
+            <Separator Margin="0,4,0,0"/>
+
+            <!-- ========== 按钮区域 ========== -->
+            <StackPanel Orientation="Horizontal"
+                        Spacing="12"
+                        HorizontalAlignment="Right"
+                        Margin="0,4,0,0">
+                <Button Content="取消"
+                        Command="{Binding CancelCommand}"
+                        Classes="DangerButton"/>
+                <Button Content="💾 保存"
+                        Command="{Binding SaveCommand}"
+                        Classes="PrimaryButton"/>
+            </StackPanel>
+
+        </StackPanel>
+    </Border>
+</Window>

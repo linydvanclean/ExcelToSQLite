@@ -1,0 +1,278 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:converters="clr-namespace:ExcelToSQLite.Converters"
+             mc:Ignorable="d"
+             d:DesignWidth="1000"
+             d:DesignHeight="650"
+             x:Class="ExcelToSQLite.Views.TaxExcelDataView">
+
+    <Border Background="White" CornerRadius="12" Padding="20">
+        <DockPanel>
+            <!-- 底部状态消息 -->
+            <Border DockPanel.Dock="Bottom"
+                    Background="{Binding StatusColor}"
+                    CornerRadius="6"
+                    Padding="12,8"
+                    Margin="0,10,0,0"
+                    IsVisible="{Binding ShowStatus}">
+                <TextBlock Text="{Binding StatusMessage}"
+                           Foreground="White"
+                           FontSize="13"
+                           TextWrapping="Wrap"/>
+            </Border>
+
+            <!-- 主内容区域 -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="12">
+
+                    <!-- ========== 标题区域 ========== -->
+                    <Border Background="#E8F5E9"
+                            CornerRadius="8"
+                            Padding="16,12">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="📊" FontSize="32" VerticalAlignment="Center"/>
+                            <StackPanel>
+                                <TextBlock Text="税务数据批量上传"
+                                           FontSize="22"
+                                           FontWeight="Bold"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="将税务Excel数据（净入库查询）导入到SQLite数据库"
+                                           FontSize="12"
+                                           Foreground="#2E7D32"
+                                           Opacity="0.8"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ========== 文件选择区域 ========== -->
+                    <Border Background="#F8F9FA"
+                            CornerRadius="8"
+                            Padding="14,12"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="📁 选择税务Excel文件"
+                                       FontWeight="SemiBold"
+                                       Foreground="#1B5E20"
+                                       FontSize="14"/>
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="文件："
+                                           VerticalAlignment="Center"
+                                           FontWeight="Bold"
+                                           Margin="0,0,12,0"/>
+                                <TextBox Grid.Column="1"
+                                         Text="{Binding FilePath}"
+                                         IsReadOnly="True"
+                                         Margin="0,0,10,0"/>
+                                <Button Grid.Column="2"
+                                        Content="📂 浏览..."
+                                        Command="{Binding SelectFileCommand}"
+                                        Classes="InfoButton"/>
+                            </Grid>
+                            
+                            <!-- 文件统计信息 -->
+                            <Grid ColumnDefinitions="Auto,*,Auto,*,Auto,*,Auto,*">
+                                <TextBlock Grid.Column="0" Text="文件数：" FontSize="12" Foreground="#666"/>
+                                <TextBlock Grid.Column="1" Text="{Binding FileCount}" FontSize="12" Foreground="#333" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="2" Text="数据行数：" FontSize="12" Foreground="#666" Margin="15,0,0,0"/>
+                                <TextBlock Grid.Column="3" Text="{Binding TotalRows}" FontSize="12" Foreground="#333" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="4" Text="总金额：" FontSize="12" Foreground="#666" Margin="15,0,0,0"/>
+                                <TextBlock Grid.Column="5" Text="{Binding TotalAmount}" FontSize="12" Foreground="#333" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="6" Text="列数：" FontSize="12" Foreground="#666" Margin="15,0,0,0"/>
+                                <TextBlock Grid.Column="7" Text="{Binding ColumnCount}" FontSize="12" Foreground="#333" FontWeight="Bold"/>
+                            </Grid>
+                            
+                            <TextBlock Text="支持格式: .xlsx, .xls (自动识别表头在第3行，跳过合计行和制表人行)"
+                                       FontSize="11"
+                                       Foreground="#78909C"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ========== 导入设置（两列布局） ========== -->
+                    <Grid ColumnDefinitions="*,*">
+                        
+                        <!-- 批次选择 -->
+                        <Border Grid.Column="0"
+                                Background="#FFF8E1"
+                                CornerRadius="8"
+                                Padding="14,12"
+                                Margin="0,0,6,0"
+                                BorderBrush="#E0E0E0"
+                                BorderThickness="1">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="📋 批次选择"
+                                           FontWeight="SemiBold"
+                                           Foreground="#E65100"
+                                           FontSize="14"/>
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <TextBlock Grid.Column="0"
+                                               Text="选择批次："
+                                               VerticalAlignment="Center"
+                                               FontWeight="Bold"
+                                               FontSize="12"
+                                               Margin="0,0,8,0"/>
+                                    <ComboBox Grid.Column="1"
+                                              ItemsSource="{Binding Batches}"
+                                              SelectedItem="{Binding SelectedBatch}"
+                                              DisplayMemberBinding="{Binding Name}"
+                                              Margin="0,0,8,0"/>
+                                    <Button Grid.Column="2"
+                                            Content="🔄"
+                                            Command="{Binding RefreshBatchesCommand}"
+                                            Classes="SmallButton"
+                                            ToolTip.Tip="刷新批次列表"/>
+                                </Grid>
+                                <TextBlock Text="{Binding BatchInfo}"
+                                           FontSize="11"
+                                           Foreground="#8D6E63"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 数据字典 -->
+                        <Border Grid.Column="1"
+                                Background="#F3E5F5"
+                                CornerRadius="8"
+                                Padding="14,12"
+                                Margin="6,0,0,0"
+                                BorderBrush="#E0E0E0"
+                                BorderThickness="1">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="📚 数据字典"
+                                           FontWeight="SemiBold"
+                                           Foreground="#4A148C"
+                                           FontSize="14"/>
+                                <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                    <TextBlock Grid.Column="0"
+                                               Text="使用："
+                                               VerticalAlignment="Center"
+                                               FontWeight="Bold"
+                                               FontSize="12"/>
+                                    <CheckBox Grid.Column="1"
+                                              IsChecked="{Binding UseDictionary}"
+                                              VerticalAlignment="Center"
+                                              Margin="6,0,10,0"/>
+                                    <ComboBox Grid.Column="2"
+                                              ItemsSource="{Binding DataDictionaries}"
+                                              SelectedItem="{Binding SelectedDictionary}"
+                                              DisplayMemberBinding="{Binding Name}"
+                                              Margin="0,0,8,0"
+                                              IsEnabled="{Binding UseDictionary}"/>
+                                    <Button Grid.Column="3"
+                                            Content="🔄"
+                                            Command="{Binding RefreshDictionariesCommand}"
+                                            Classes="SmallButton"
+                                            IsEnabled="{Binding UseDictionary}"
+                                            ToolTip.Tip="刷新字典"/>
+                                </Grid>
+                                <TextBlock Text="{Binding DictionaryInfo}"
+                                           FontSize="11"
+                                           Foreground="#7B1FA2"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                        
+                    </Grid>
+
+                    <!-- ========== 表名设置 ========== -->
+                    <Border Background="#E3F2FD"
+                            CornerRadius="8"
+                            Padding="14,12"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="📝 表名设置"
+                                       FontWeight="SemiBold"
+                                       Foreground="#0D47A1"
+                                       FontSize="14"/>
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="表名："
+                                           VerticalAlignment="Center"
+                                           FontWeight="Bold"
+                                           FontSize="12"
+                                           Margin="0,0,12,0"/>
+                                <TextBox Grid.Column="1"
+                                         Text="{Binding TableName}"
+                                         IsReadOnly="False"
+                                         Background="White"
+                                         Margin="0,0,10,0"/>
+                                <Button Grid.Column="2"
+                                        Content="🔄 自动生成"
+                                        Command="{Binding GenerateTableNameCommand}"
+                                        Classes="PreviewButton"/>
+                            </Grid>
+                            <TextBlock Text="{Binding TableNameInfo}"
+                                       FontSize="11"
+                                       Foreground="#78909C"
+                                       TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding TableNameValidation}"
+                                       FontSize="11"
+                                       Foreground="{Binding ValidationColor}"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding ShowValidation}"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- ========== 操作按钮 ========== -->
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Spacing="16"
+                                Margin="0,4,0,0">
+                        <Button Content="📤 导入税务数据"
+                                Command="{Binding ImportCommand}"
+                                IsEnabled="{Binding CanImport}"
+                                Classes="PrimaryButton"
+                                FontSize="14"
+                                Padding="25,12"/>
+                        <Button Content="🗑️ 清空"
+                                Command="{Binding ClearCommand}"
+                                Classes="DangerButton"
+                                FontSize="14"
+                                Padding="20,12"/>
+                    </StackPanel>
+
+                    <!-- ========== 导入进度 ========== -->
+                    <Border Background="#FFF3E0"
+                            CornerRadius="8"
+                            Padding="14,12"
+                            IsVisible="{Binding IsLoading}">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="⏳ 正在导入..."
+                                       FontWeight="SemiBold"
+                                       Foreground="#E65100"
+                                       FontSize="14"/>
+                            <ProgressBar IsIndeterminate="True"
+                                         Height="6"
+                                         Foreground="#FF9800"/>
+                            <TextBlock Text="{Binding LoadingMessage}"
+                                       FontSize="12"
+                                       Foreground="#8D6E63"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ========== 导入统计 ========== -->
+                    <Border Background="#E8F5E9"
+                            CornerRadius="8"
+                            Padding="14,12"
+                            IsVisible="{Binding ShowImportStats}">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="📊 导入统计"
+                                       FontWeight="SemiBold"
+                                       Foreground="#1B5E20"
+                                       FontSize="14"/>
+                            <TextBlock Text="{Binding ImportStatsText}" 
+                                       FontSize="12" 
+                                       Foreground="#2E7D32" 
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
+</UserControl>

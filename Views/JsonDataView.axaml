@@ -1,0 +1,369 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:converters="clr-namespace:ExcelToSQLite.Converters"
+             mc:Ignorable="d" 
+             d:DesignWidth="800" 
+             d:DesignHeight="700"
+             x:Class="ExcelToSQLite.Views.JsonDataView">
+
+    <UserControl.Styles>
+        <!-- 导入按钮 - 绿色 -->
+        <Style Selector="Button.ImportButton">
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        <Style Selector="Button.ImportButton:pointerover">
+            <Setter Property="Background" Value="#43A047"/>
+        </Style>
+        <Style Selector="Button.ImportButton:pressed">
+            <Setter Property="Background" Value="#388E3C"/>
+        </Style>
+        <Style Selector="Button.ImportButton:disabled">
+            <Setter Property="Background" Value="#A5D6A7"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+        </Style>
+
+        <!-- 清空按钮 - 红色 -->
+        <Style Selector="Button.ClearButton">
+            <Setter Property="Background" Value="#EF5350"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        <Style Selector="Button.ClearButton:pointerover">
+            <Setter Property="Background" Value="#E53935"/>
+        </Style>
+        <Style Selector="Button.ClearButton:pressed">
+            <Setter Property="Background" Value="#C62828"/>
+        </Style>
+        <Style Selector="Button.ClearButton:disabled">
+            <Setter Property="Background" Value="#BDBDBD"/>
+            <Setter Property="Foreground" Value="#9E9E9E"/>
+        </Style>
+
+        <!-- 浏览按钮 - 蓝色 -->
+        <Style Selector="Button.BrowseButton">
+            <Setter Property="Background" Value="#2196F3"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style Selector="Button.BrowseButton:pointerover">
+            <Setter Property="Background" Value="#1976D2"/>
+        </Style>
+        <Style Selector="Button.BrowseButton:pressed">
+            <Setter Property="Background" Value="#1565C0"/>
+        </Style>
+
+        <!-- 刷新按钮 - 小图标按钮 -->
+        <Style Selector="Button.IconButton">
+            <Setter Property="Background" Value="#78909C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.IconButton:pointerover">
+            <Setter Property="Background" Value="#607D8B"/>
+        </Style>
+        <Style Selector="Button.IconButton:pressed">
+            <Setter Property="Background" Value="#546E7A"/>
+        </Style>
+        <Style Selector="Button.IconButton:disabled">
+            <Setter Property="Background" Value="#BDBDBD"/>
+            <Setter Property="Foreground" Value="#9E9E9E"/>
+        </Style>
+
+        <!-- 自动生成按钮 - 橙色 -->
+        <Style Selector="Button.GenerateButton">
+            <Setter Property="Background" Value="#FF9800"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style Selector="Button.GenerateButton:pointerover">
+            <Setter Property="Background" Value="#F57C00"/>
+        </Style>
+        <Style Selector="Button.GenerateButton:pressed">
+            <Setter Property="Background" Value="#E65100"/>
+        </Style>
+
+        <!-- TextBox 样式 -->
+        <Style Selector="TextBox">
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#D0D0D0"/>
+        </Style>
+        <Style Selector="TextBox:focus">
+            <Setter Property="BorderBrush" Value="#2196F3"/>
+        </Style>
+
+        <!-- ComboBox 样式 -->
+        <Style Selector="ComboBox">
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8,6"/>
+        </Style>
+
+        <!-- CheckBox 样式 -->
+        <Style Selector="CheckBox">
+            <Setter Property="Margin" Value="0,0,8,0"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="White" CornerRadius="12" Padding="20">
+        <DockPanel>
+            <!-- 底部状态消息 -->
+            <Border DockPanel.Dock="Bottom"
+                    Background="{Binding StatusColor}"
+                    CornerRadius="6"
+                    Padding="12,8"
+                    Margin="0,10,0,0"
+                    IsVisible="{Binding ShowStatus}">
+                <TextBlock Text="{Binding StatusMessage}"
+                           Foreground="White"
+                           FontSize="13"
+                           TextWrapping="Wrap"/>
+            </Border>
+
+            <!-- 主内容区域 -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="12">
+
+                    <!-- ========== 标题区域 ========== -->
+                    <Border Background="#E8F5E9"
+                            CornerRadius="8"
+                            Padding="16,12">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="📄" FontSize="32" VerticalAlignment="Center"/>
+                            <StackPanel>
+                                <TextBlock Text="JSON 文件导入"
+                                           FontSize="22"
+                                           FontWeight="Bold"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="将 JSON 数组格式数据导入到 SQLite 数据库"
+                                           FontSize="12"
+                                           Foreground="#2E7D32"
+                                           Opacity="0.8"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ========== 文件选择区域 ========== -->
+                    <Border Background="#F8F9FA"
+                            CornerRadius="8"
+                            Padding="14,12"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="📁 选择文件"
+                                       FontWeight="SemiBold"
+                                       Foreground="#1A237E"
+                                       FontSize="14"/>
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <TextBlock Grid.Column="0" 
+                                           Text="文件：" 
+                                           VerticalAlignment="Center"
+                                           FontWeight="Bold"
+                                           Margin="0,0,12,0"/>
+                                <TextBox Grid.Column="1" 
+                                         Text="{Binding FilePath}"
+                                         IsReadOnly="True"
+                                         Margin="0,0,10,0"/>
+                                <Button Grid.Column="2" 
+                                        Content="📂 浏览..."
+                                        Command="{Binding SelectFileCommand}"
+                                        Classes="BrowseButton"/>
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <TextBlock Text="支持格式: .json (JSON数组格式)"
+                                           FontSize="11"
+                                           Foreground="#78909C"/>
+                                <TextBlock Text="💡 自动解析 JSON 数组并生成表结构"
+                                           FontSize="11"
+                                           Foreground="#1B5E20"
+                                           FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ========== 批次选择 + 数据字典选择 - 横向合并 ========== -->
+                    <Grid ColumnDefinitions="*,*">
+                        
+                        <!-- 批次选择 -->
+                        <Border Grid.Column="0"
+                                Background="#FFF8E1"
+                                CornerRadius="8"
+                                Padding="14,12"
+                                Margin="0,0,6,0"
+                                BorderBrush="#E0E0E0"
+                                BorderThickness="1">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="📋 批次选择"
+                                           FontWeight="SemiBold"
+                                           Foreground="#E65100"
+                                           FontSize="14"/>
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <TextBlock Grid.Column="0" 
+                                               Text="选择批次：" 
+                                               VerticalAlignment="Center"
+                                               FontWeight="Bold"
+                                               FontSize="12"
+                                               Margin="0,0,8,0"/>
+                                    <ComboBox Grid.Column="1" 
+                                              ItemsSource="{Binding Batches}"
+                                              SelectedItem="{Binding SelectedBatch}"
+                                              DisplayMemberBinding="{Binding Name}"
+                                              Margin="0,0,8,0"/>
+                                    <Button Grid.Column="2" 
+                                            Content="🔄"
+                                            Command="{Binding RefreshBatchesCommand}"
+                                            Classes="IconButton"
+                                            ToolTip.Tip="刷新批次"/>
+                                </Grid>
+                                <TextBlock Text="{Binding BatchInfo}"
+                                           FontSize="11"
+                                           Foreground="#8D6E63"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- 数据字典选择 -->
+                        <Border Grid.Column="1"
+                                Background="#F3E5F5"
+                                CornerRadius="8"
+                                Padding="14,12"
+                                Margin="6,0,0,0"
+                                BorderBrush="#E0E0E0"
+                                BorderThickness="1">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="📚 数据字典"
+                                           FontWeight="SemiBold"
+                                           Foreground="#4A148C"
+                                           FontSize="14"/>
+                                <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                    <TextBlock Grid.Column="0" 
+                                               Text="使用：" 
+                                               VerticalAlignment="Center"
+                                               FontWeight="Bold"
+                                               FontSize="12"/>
+                                    <CheckBox Grid.Column="1" 
+                                              IsChecked="{Binding UseDictionary}"
+                                              VerticalAlignment="Center"
+                                              Margin="6,0,10,0"/>
+                                    <ComboBox Grid.Column="2" 
+                                              ItemsSource="{Binding DataDictionaries}"
+                                              SelectedItem="{Binding SelectedDictionary}"
+                                              DisplayMemberBinding="{Binding Name}"
+                                              Margin="0,0,8,0"
+                                              IsEnabled="{Binding UseDictionary}"/>
+                                    <Button Grid.Column="3" 
+                                            Content="🔄"
+                                            Command="{Binding RefreshDictionariesCommand}"
+                                            Classes="IconButton"
+                                            IsEnabled="{Binding UseDictionary}"
+                                            ToolTip.Tip="刷新字典"/>
+                                </Grid>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{Binding DictionaryInfo}"
+                                               FontSize="11"
+                                               Foreground="#7B1FA2"
+                                               TextWrapping="Wrap"/>
+                                    <TextBlock Text="💡 根据字典 TableName 生成表名"
+                                               FontSize="10"
+                                               Foreground="#9C27B0"
+                                               FontStyle="Italic"
+                                               Opacity="0.8"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        
+                    </Grid>
+
+                    <!-- ========== 表名设置 ========== -->
+                    <Border Background="#F8F9FA"
+                            CornerRadius="8"
+                            Padding="14,12"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="📝 表名设置"
+                                       FontWeight="SemiBold"
+                                       Foreground="#1A237E"
+                                       FontSize="14"/>
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <TextBlock Grid.Column="0" 
+                                           Text="表名：" 
+                                           VerticalAlignment="Center"
+                                           FontWeight="Bold"
+                                           FontSize="12"
+                                           Margin="0,0,12,0"/>
+                                <TextBox Grid.Column="1" 
+                                         Text="{Binding TableName}"
+                                         IsReadOnly="False"
+                                         Background="White"
+                                         Margin="0,0,10,0"/>
+                                <Button Grid.Column="2" 
+                                        Content="🔄 自动生成"
+                                        Command="{Binding GenerateTableNameCommand}"
+                                        Classes="GenerateButton"/>
+                            </Grid>
+                            <ScrollViewer MaxHeight="60" 
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <TextBlock Text="{Binding TableNameInfo}"
+                                           FontSize="11"
+                                           Foreground="#78909C"
+                                           TextWrapping="Wrap"/>
+                            </ScrollViewer>
+                            <TextBlock Text="{Binding TableNameValidation}"
+                                       FontSize="11"
+                                       Foreground="{Binding ValidationColor}"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding ShowValidation}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ========== 操作按钮 ========== -->
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Spacing="16"
+                                Margin="0,4,0,0">
+                        <Button Content="📤 导入到数据库"
+                                Command="{Binding ImportCommand}"
+                                IsEnabled="{Binding CanImport}"
+                                Classes="ImportButton"/>
+                        <Button Content="🗑️ 清空"
+                                Command="{Binding ClearCommand}"
+                                Classes="ClearButton"/>
+                    </StackPanel>
+
+                    <!-- 额外间距 -->
+                    <StackPanel Height="4"/>
+
+                </StackPanel>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
+</UserControl>

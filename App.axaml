@@ -1,0 +1,174 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:ExcelToSQLite.Converters"
+             x:Class="ExcelToSQLite.App">
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+
+        <!-- ==================== 统一按钮样式 ==================== -->
+        <!-- 主要操作按钮 - 绿色 -->
+        <Style Selector="Button.PrimaryButton">
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style Selector="Button.PrimaryButton:pointerover">
+            <Setter Property="Background" Value="#43A047"/>
+        </Style>
+        <Style Selector="Button.PrimaryButton:disabled">
+            <Setter Property="Background" Value="#BDBDBD"/>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+        </Style>
+
+        <!-- 信息按钮 - 蓝色 -->
+        <Style Selector="Button.InfoButton">
+            <Setter Property="Background" Value="#2196F3"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style Selector="Button.InfoButton:pointerover">
+            <Setter Property="Background" Value="#1976D2"/>
+        </Style>
+
+        <!-- 危险操作按钮 - 红色 -->
+        <Style Selector="Button.DangerButton">
+            <Setter Property="Background" Value="#D32F2F"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style Selector="Button.DangerButton:pointerover">
+            <Setter Property="Background" Value="#C62828"/>
+        </Style>
+
+        <!-- 警告按钮 - 橙色 -->
+        <Style Selector="Button.WarningButton">
+            <Setter Property="Background" Value="#FF9800"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style Selector="Button.WarningButton:pointerover">
+            <Setter Property="Background" Value="#F57C00"/>
+        </Style>
+
+        <!-- 成功按钮 - 深绿 -->
+        <Style Selector="Button.SuccessButton">
+            <Setter Property="Background" Value="#2E7D32"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style Selector="Button.SuccessButton:pointerover">
+            <Setter Property="Background" Value="#1B5E20"/>
+        </Style>
+        <Style Selector="Button.SuccessButton:disabled">
+            <Setter Property="Background" Value="#9E9E9E"/>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+        </Style>
+
+        <!-- 小按钮 - 灰色 -->
+        <Style Selector="Button.SmallButton">
+            <Setter Property="Background" Value="#78909C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+        <Style Selector="Button.SmallButton:pointerover">
+            <Setter Property="Background" Value="#607D8B"/>
+        </Style>
+
+        <!-- 次要按钮 - 浅灰 -->
+        <Style Selector="Button.SecondaryButton">
+            <Setter Property="Background" Value="#78909C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.SecondaryButton:pointerover">
+            <Setter Property="Background" Value="#607D8B"/>
+        </Style>
+
+        <!-- 紫色AI按钮 -->
+        <Style Selector="Button.AiSubmitButton">
+            <Setter Property="Background" Value="#7B1FA2"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        <Style Selector="Button.AiSubmitButton:pointerover">
+            <Setter Property="Background" Value="#6A1B9A"/>
+        </Style>
+
+        <!-- 预览按钮 - 橙色 -->
+        <Style Selector="Button.PreviewButton">
+            <Setter Property="Background" Value="#FF9800"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.PreviewButton:pointerover">
+            <Setter Property="Background" Value="#F57C00"/>
+        </Style>
+        
+        <!-- 标签项样式  -->
+        <Style Selector="TabItem">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        
+    </Application.Styles>
+
+    <Application.Resources>
+        <!-- 基础转换器 -->
+        <converters:AlternatingRowConverter x:Key="AlternatingRowConverter"/>
+        <converters:BooleanToTextConverter x:Key="BooleanToTextConverter"/>
+        <converters:CategoryColorConverter x:Key="CategoryColorConverter"/>
+        <converters:CollectionHasItemsConverter x:Key="CollectionHasItemsConverter"/>
+
+        <!-- 颜色转换器 -->
+        <converters:ColorToBrushConverter x:Key="ColorToBrushConverter"/>
+        <converters:BrushToColorConverter x:Key="BrushToColorConverter"/>
+        <converters:StringToBrushConverter x:Key="StringToBrushConverter"/>
+
+        <!-- 字符串/布尔转换器 -->
+        <converters:StringToBoolConverter x:Key="StringToBoolConverter"/>
+        <converters:IsDefaultBatchConverter x:Key="IsDefaultBatchConverter"/>
+        <converters:NotConverter x:Key="NotConverter"/>
+        <converters:InvertBoolConverter x:Key="InvertBoolConverter"/>
+        <converters:ObjectToBoolConverter x:Key="ObjectToBoolConverter"/>
+        
+        <!-- ✅ 添加大于零转换器 -->
+        <converters:IsGreaterThanZeroConverter x:Key="IsGreaterThanZeroConverter"/>
+    </Application.Resources>
+
+</Application>

@@ -1,0 +1,117 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="900"
+             d:DesignHeight="700"
+             x:Class="ExcelToSQLite.Views.IndicatorManagementView">
+
+    <Border Background="White" CornerRadius="12" Padding="20">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto">
+            <!-- 标题 -->
+            <Border Grid.Row="0" Background="#F8F9FA" CornerRadius="8" Padding="16,12" Margin="0,0,0,8">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock Text="📊" FontSize="28"/>
+                    <StackPanel>
+                        <TextBlock Text="指标管理" FontSize="22" FontWeight="Bold" Foreground="#1A237E"/>
+                        <TextBlock Text="创建和管理分析指标" FontSize="12" Foreground="#78909C" Opacity="0.8"/>
+                    </StackPanel>
+                    <Border Background="#E8EAF6" CornerRadius="10" Padding="8,3" VerticalAlignment="Center">
+                        <TextBlock Text="📈 指标管理" FontSize="10" Foreground="#3949AB" FontWeight="SemiBold"/>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- 操作按钮 同一行 -->
+            <Border Grid.Row="1" Background="#E3F2FD" CornerRadius="8" Padding="14,10" Margin="0,0,0,8">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="📋 管理：" FontSize="13" FontWeight="SemiBold" Foreground="#1565C0" VerticalAlignment="Center"/>
+                    <Button Content="➕ 创建指标" Command="{Binding CreateIndicatorCommand}" Classes="PrimaryButton"/>
+                    <Button Content="🔄 刷新列表" Command="{Binding RefreshCommand}" Classes="InfoButton"/>
+                    <Button Content="🗑️ 全部删除" Command="{Binding DeleteAllCommand}" Classes="DangerButton"/>
+                    <Border Background="#BBDEFB" Width="1" Margin="6,2"/>
+                    <TextBlock Text="📦 导入导出：" FontSize="13" FontWeight="SemiBold" Foreground="#1565C0" VerticalAlignment="Center"/>
+                    <Button Content="📥 导入" Command="{Binding ImportCommand}" IsEnabled="{Binding !IsImporting}" Classes="InfoButton"/>
+                    <Button Content="📤 导出全部" Command="{Binding ExportAllCommand}" IsEnabled="{Binding !IsExporting}" Classes="SuccessButton"/>
+                    <Button Content="📤 导出选中" Command="{Binding ExportSelectedCommand}" IsEnabled="{Binding HasSelectedIndicators}" Classes="PrimaryButton"/>
+                    <Border Background="#BBDEFB" Width="1" Margin="6,2"/>
+                    <TextBlock Text="⚡ 选择：" FontSize="13" FontWeight="SemiBold" Foreground="#1565C0" VerticalAlignment="Center"/>
+                    <Button Content="全选" Command="{Binding SelectAllCommand}" Classes="SmallButton"/>
+                    <Button Content="清空" Command="{Binding ClearSelectionCommand}" Classes="DangerButton" FontSize="11" Padding="8,4"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 列表标题 -->
+            <Grid Grid.Row="2" ColumnDefinitions="*, Auto" Margin="0,4,0,0">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="📋" FontSize="16"/>
+                    <TextBlock Text="指标列表" FontWeight="SemiBold" FontSize="15" Foreground="#1A237E"/>
+                    <Border Background="#E8EAF6" CornerRadius="10" Padding="10,3">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="📊" FontSize="11"/>
+                            <TextBlock Text="{Binding Indicators.Count, StringFormat='共 {0} 个指标'}" FontSize="11" Foreground="#3949AB" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="4" Grid.Column="1">
+                    <TextBlock Text="已选：" FontSize="12" Foreground="#78909C"/>
+                    <TextBlock Text="{Binding SelectedIndicators.Count}" FontSize="12" FontWeight="SemiBold" Foreground="#1565C0"/>
+                    <TextBlock Text="个" FontSize="12" Foreground="#78909C"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- 列表表头 -->
+            <Border Grid.Row="3" Background="#E3F2FD" CornerRadius="6" Padding="10,8" Margin="0,4,0,0">
+                <Grid ColumnDefinitions="30, 35, 2*, 1.2*, 1.5*, 120">
+                    <CheckBox Grid.Column="0" IsChecked="{Binding IsAllSelected}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Text="#" FontWeight="Bold" FontSize="11" Foreground="#37474F"/>
+                    <TextBlock Grid.Column="2" Text="📝 指标名称" FontWeight="Bold" FontSize="11" Foreground="#37474F"/>
+                    <TextBlock Grid.Column="3" Text="📂 分类" FontWeight="Bold" FontSize="11" Foreground="#37474F"/>
+                    <TextBlock Grid.Column="4" Text="📝 描述" FontWeight="Bold" FontSize="11" Foreground="#37474F"/>
+                    <TextBlock Grid.Column="5" Text="⚙️ 操作" FontWeight="Bold" FontSize="11" Foreground="#37474F" TextAlignment="Center"/>
+                </Grid>
+            </Border>
+
+            <!-- ListBox 填满剩余空间 - 可滚动 -->
+            <ScrollViewer Grid.Row="4" BorderThickness="1" BorderBrush="#E0E0E0" CornerRadius="6" Background="White" Margin="0,4,0,0">
+                <ListBox x:Name="IndicatorsListBox" ItemsSource="{Binding Indicators}" Background="White" BorderThickness="0" SelectionMode="Multiple">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="6,4">
+                                <Grid ColumnDefinitions="30, 35, 2*, 1.2*, 1.5*, 120">
+                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Index}" VerticalAlignment="Center" FontSize="11" Foreground="#78909C" TextAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Name}" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Foreground="#1A237E" TextTrimming="CharacterEllipsis"/>
+                                    <Border Grid.Column="3" Background="#E8EAF6" CornerRadius="8" Padding="5,1" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Category}" FontSize="10" Foreground="#3949AB" FontWeight="SemiBold"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="4" Text="{Binding Description}" VerticalAlignment="Center" FontSize="11" Foreground="#78909C" TextTrimming="CharacterEllipsis"/>
+                                    <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Button Command="{Binding DataContext.EditCommand, ElementName=IndicatorsListBox}" CommandParameter="{Binding}" Classes="InfoButton" FontSize="10" Padding="5,2" Width="32">✏️</Button>
+                                        <Button Command="{Binding DataContext.DeleteCommand, ElementName=IndicatorsListBox}" CommandParameter="{Binding}" Classes="DangerButton" FontSize="10" Padding="5,2" Width="32">🗑️</Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </ScrollViewer>
+
+            <!-- 状态栏 底部 -->
+            <Border Grid.Row="5" Background="#FFF8E1" CornerRadius="6" Padding="14,8" BorderBrush="#FFE082" BorderThickness="1" Margin="0,6,0,0">
+                <Grid ColumnDefinitions="*, Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="📌 状态：" FontSize="12" FontWeight="SemiBold" Foreground="#E65100"/>
+                        <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{Binding StatusColor}" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="4" Grid.Column="1">
+                        <TextBlock Text="已选：" FontSize="12" Foreground="#78909C"/>
+                        <TextBlock Text="{Binding SelectedIndicators.Count}" FontSize="12" FontWeight="SemiBold" Foreground="#1565C0"/>
+                        <TextBlock Text="个" FontSize="12" Foreground="#78909C"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

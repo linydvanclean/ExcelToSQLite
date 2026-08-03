@@ -1,0 +1,395 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ExcelToSQLite.Views"
+        xmlns:models="clr-namespace:ExcelToSQLite.Models"
+        xmlns:converters="clr-namespace:ExcelToSQLite.Converters"
+        mc:Ignorable="d" 
+        d:DesignWidth="1024" 
+        d:DesignHeight="700"
+        x:Class="ExcelToSQLite.Views.MainWindow"
+        Title="{Binding SystemTitle}"
+        Width="1100"
+        Height="750"
+        MinWidth="800"
+        MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        x:Name="RootWindow">
+    
+    <Window.Resources>
+        <converters:BooleanToTextConverter x:Key="BooleanToTextConverter"/>
+    </Window.Resources>
+    
+    <Window.Styles>
+        <!-- 欢迎页面的样式 -->
+        <Style Selector="Border.WelcomeCard">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="Padding" Value="50,60"/>
+        </Style>
+        
+        <Style Selector="TextBlock.WelcomeTitle">
+            <Setter Property="FontSize" Value="36"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#2C3E50"/>
+        </Style>
+        
+        <Style Selector="TextBlock.WelcomeSubtitle">
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="Foreground" Value="#7F8C8D"/>
+            <Setter Property="Margin" Value="0,8,0,0"/>
+        </Style>
+        
+        <Style Selector="TextBlock.WelcomeDescription">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#95A5A6"/>
+            <Setter Property="Margin" Value="0,4,0,0"/>
+        </Style>
+        
+        <!-- ✅ 功能卡片样式 - 适用于 Button -->
+        <Style Selector="Button.FeatureCard">
+            <Setter Property="Background" Value="#F8F9FA"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="20,16"/>
+            <Setter Property="Margin" Value="8"/>
+            <Setter Property="Width" Value="180"/>
+            <Setter Property="Height" Value="130"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="#E9ECEF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        
+        <Style Selector="Button.FeatureCard:pointerover">
+            <Setter Property="Background" Value="#E8F0FE"/>
+            <Setter Property="BorderBrush" Value="#4A90D9"/>
+        </Style>
+        
+        <Style Selector="Button.FeatureCard:pressed">
+            <Setter Property="Background" Value="#D4E4F7"/>
+            <Setter Property="BorderBrush" Value="#3A7BC8"/>
+        </Style>
+        
+        <Style Selector="TextBlock.FeatureIcon">
+            <Setter Property="FontSize" Value="32"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+        
+        <Style Selector="TextBlock.FeatureTitle">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#2C3E50"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,8,0,4"/>
+        </Style>
+        
+        <Style Selector="TextBlock.FeatureDesc">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#95A5A6"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+        </Style>
+        
+        <Style Selector="Button.StartButton">
+            <Setter Property="Background" Value="#4A90D9"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="40,14"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Margin" Value="0,20,0,0"/>
+        </Style>
+        
+        <Style Selector="Button.StartButton:pointerover">
+            <Setter Property="Background" Value="#3A7BC8"/>
+        </Style>
+        
+        <!-- ✅ 图标按钮样式 -->
+        <Style Selector="Button.IconButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+        
+        <Style Selector="Button.IconButton:pointerover">
+            <Setter Property="Background" Value="#F0F0F0"/>
+            <Setter Property="CornerRadius" Value="12"/>
+        </Style>
+        
+        <Style Selector="Border.Divider">
+            <Setter Property="Height" Value="2"/>
+            <Setter Property="Background" Value="#ECF0F1"/>
+            <Setter Property="Margin" Value="0,20"/>
+            <Setter Property="Width" Value="80"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- 菜单按钮样式 -->
+        <Style Selector="Button.MenuButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.MenuButton:pointerover">
+            <Setter Property="Background" Value="#34495E"/>
+        </Style>
+
+        <!-- 二级菜单按钮样式 -->
+        <Style Selector="Button.SubMenuButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.SubMenuButton:pointerover">
+            <Setter Property="Background" Value="#34495E"/>
+        </Style>
+
+        <!-- 退出按钮样式 -->
+        <Style Selector="Button.LogoutButton">
+            <Setter Property="Background" Value="#E74C3C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="15,12"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+        <Style Selector="Button.LogoutButton:pointerover">
+            <Setter Property="Background" Value="#C0392B"/>
+        </Style>
+    </Window.Styles>
+    
+    <Grid ColumnDefinitions="260,*">
+        <!-- 左侧菜单栏 - 使用 Grid 实现固定布局 -->
+        <Border Grid.Column="0" 
+                Background="#2C3E50"
+                Padding="15,10">
+            
+            <!-- ✅ 使用 Grid 的三行布局：顶部固定、中间滚动、底部固定 -->
+            <Grid RowDefinitions="Auto,*,Auto">
+                
+                <!-- 第0行：系统标题 - 固定在顶部 -->
+                <Border Grid.Row="0"
+                        Background="#34495E"
+                        CornerRadius="8"
+                        Padding="15"
+                        Margin="0,0,0,15">
+                    <TextBlock Text="{Binding AppConfigs.SystemName}"
+                               FontSize="14"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               HorizontalAlignment="Center"/>
+                </Border>
+                
+                <!-- 第1行：菜单列表 - 填充剩余空间，可滚动 -->
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Margin="0,0,0,8">
+                    <ItemsControl x:Name="MenuItemsControl" 
+                                  ItemsSource="{Binding MenuItems}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="models:MenuItem">
+                                <Border Margin="0,2">
+                                    <StackPanel>
+                                        <!-- 一级菜单 -->
+                                        <Button Command="{Binding DataContext.ToggleMenuCommand, ElementName=RootWindow}"
+                                                CommandParameter="{Binding}"
+                                                Classes="MenuButton">
+                                            <Grid ColumnDefinitions="30,*,30">
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding Icon}"
+                                                           FontSize="16"/>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Header}"
+                                                           VerticalAlignment="Center"
+                                                           Margin="8,0,0,0"/>
+                                                <TextBlock Grid.Column="2"
+                                                           Text="{Binding IsExpanded, Converter={StaticResource BooleanToTextConverter}}"
+                                                           VerticalAlignment="Center"
+                                                           HorizontalAlignment="Right"
+                                                           Foreground="#7F8C8D"
+                                                           FontSize="12"/>
+                                            </Grid>
+                                        </Button>
+                                        
+                                        <!-- 二级菜单 -->
+                                        <ItemsControl ItemsSource="{Binding Children}"
+                                                      Margin="20,0,0,0"
+                                                      IsVisible="{Binding IsExpanded}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Button Command="{Binding DataContext.NavigateCommand, ElementName=RootWindow}"
+                                                            CommandParameter="{Binding CommandParameter}"
+                                                            Classes="SubMenuButton">
+                                                        <Grid ColumnDefinitions="30,*">
+                                                            <TextBlock Grid.Column="0"
+                                                                       Text="{Binding Icon}"
+                                                                       FontSize="14"/>
+                                                            <TextBlock Grid.Column="1"
+                                                                       Text="{Binding Header}"
+                                                                       VerticalAlignment="Center"
+                                                                       Margin="8,0,0,0"/>
+                                                        </Grid>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                
+                <!-- 第2行：退出登录按钮 - 固定在底部 -->
+                <Border Grid.Row="2"
+                        Margin="0,8,0,0">
+                    <Button Name="LogoutButton"
+                            Content="🚪 退出登录"
+                            Command="{Binding LogoutCommand}"
+                            Classes="LogoutButton"/>
+                </Border>
+                
+            </Grid>
+        </Border>
+        
+        <!-- 右侧内容区域 -->
+        <Border Grid.Column="1" 
+                Background="#F0F2F5"
+                Padding="30">
+            <Grid>
+                <!-- 内容容器 -->
+                <ContentControl Name="ContentArea"
+                                Content="{Binding CurrentView}"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"/>
+                
+                 <!-- 欢迎页面 -->
+                <Border Name="WelcomePanel"
+                        Classes="WelcomeCard"
+                        IsVisible="{Binding ShowWelcome}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="5">
+                            
+                            <!-- Logo 图标 -->
+                            <TextBlock Text="📊"
+                                       FontSize="72"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,10"/>
+                            
+                            <!-- 标题 -->
+                            <TextBlock Classes="WelcomeTitle"
+                                       HorizontalAlignment="Center">
+                                <Run Text="欢迎使用"/>
+                                <Run Text="{Binding AppConfigs.SystemName}"
+                                     Foreground="#4A90D9"/>
+                            </TextBlock>
+                            
+                            <!-- 分隔线 -->
+                            <Border Classes="Divider"/>
+                            
+                            <!-- 副标题 -->
+                            <TextBlock Classes="WelcomeSubtitle"
+                                       HorizontalAlignment="Center">
+                                <Run Text="Excel、JSON 数据轻松导入 "/>
+                                <Run Text="SQLite"
+                                     Foreground="#4A90D9"
+                                     FontWeight="Bold"/>
+                            </TextBlock>
+                            
+                            <TextBlock Classes="WelcomeDescription"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,16">
+                                现代化数据管理工具 · 高效 · 安全 · 易用
+                            </TextBlock>
+                            
+                            <!-- ✅ 功能卡片 - 使用 Button 实现点击导航 -->
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Center"
+                                        Spacing="12"
+                                        Margin="0,12,0,0">
+                                
+                                <!-- 卡片1：数据导入 -> 跳转到 Excel 导入 -->
+                                <Button Classes="FeatureCard"
+                                        Command="{Binding NavigateCommand}"
+                                        CommandParameter="Excel">
+                                    <StackPanel>
+                                        <TextBlock Classes="FeatureIcon">📥</TextBlock>
+                                        <TextBlock Classes="FeatureTitle">数据导入</TextBlock>
+                                        <TextBlock Classes="FeatureDesc">支持 Excel、JSON 格式</TextBlock>
+                                    </StackPanel>
+                                </Button>
+                                
+                                <!-- 卡片2：数据管理 -> 跳转到数据库管理 -->
+                                <Button Classes="FeatureCard"
+                                        Command="{Binding NavigateCommand}"
+                                        CommandParameter="Database">
+                                    <StackPanel>
+                                        <TextBlock Classes="FeatureIcon">🗄️</TextBlock>
+                                        <TextBlock Classes="FeatureTitle">数据管理</TextBlock>
+                                        <TextBlock Classes="FeatureDesc">查看、编辑、删除数据</TextBlock>
+                                    </StackPanel>
+                                </Button>
+                                
+                                <!-- 卡片3：数据分析 -> 跳转到分析批次 -->
+                                <Button Classes="FeatureCard"
+                                        Command="{Binding NavigateCommand}"
+                                        CommandParameter="AnalysisBatch">
+                                    <StackPanel>
+                                        <TextBlock Classes="FeatureIcon">📊</TextBlock>
+                                        <TextBlock Classes="FeatureTitle">数据分析</TextBlock>
+                                        <TextBlock Classes="FeatureDesc">智能分析、指标管理</TextBlock>
+                                    </StackPanel>
+                                </Button>
+                                
+                                <!-- 卡片4：AI建模 -> 跳转到 AI 建模 -->
+                                <Button Classes="FeatureCard"
+                                        Command="{Binding NavigateCommand}"
+                                        CommandParameter="CreateAiModel">
+                                    <StackPanel>
+                                        <TextBlock Classes="FeatureIcon">🤖</TextBlock>
+                                        <TextBlock Classes="FeatureTitle">AI建模</TextBlock>
+                                        <TextBlock Classes="FeatureDesc">智能数据建模分析</TextBlock>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                            
+                            <!-- 开始按钮 -->
+                            <Button Classes="StartButton"
+                                    Content="🚀 开始使用"
+                                    Command="{Binding StartCommand}"/>
+                            
+                            <!-- 底部版权信息 -->
+                            <TextBlock Text="© 2026 VanClean · 保留所有权利"
+                                       FontSize="11"
+                                       Foreground="#BDC3C7"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,30,0,0"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

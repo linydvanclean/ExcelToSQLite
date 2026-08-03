@@ -1,0 +1,227 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:ExcelToSQLite.Converters"
+             x:Class="ExcelToSQLite.Views.AnalysisScanDialog">
+
+    <Border Background="White" CornerRadius="8" Padding="20">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="🔍" FontSize="24"/>
+                    <StackPanel>
+                        <TextBlock Text="选择要扫描的指标"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Foreground="#1A237E"/>
+                        <TextBlock Text="{Binding StatusMessage}"
+                                   FontSize="12"
+                                   Foreground="#78909C"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+
+            <!-- 批次信息 -->
+            <Border Grid.Row="1"
+                    Background="#F5F8FF"
+                    CornerRadius="6"
+                    Padding="12"
+                    Margin="0,0,0,8">
+                <WrapPanel Orientation="Horizontal">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="📋" FontSize="14"/>
+                        <TextBlock Text="批次：" FontWeight="SemiBold" Foreground="#1A237E"/>
+                        <TextBlock Text="{Binding Batch.Name}" Foreground="#1565C0" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="📅" FontSize="14"/>
+                        <TextBlock Text="期间：" FontWeight="SemiBold" Foreground="#1A237E"/>
+                        <TextBlock Text="{Binding Batch.PeriodStart, StringFormat='yyyy-MM-dd'}" Foreground="#2E7D32"/>
+                        <TextBlock Text="至" Foreground="#78909C"/>
+                        <TextBlock Text="{Binding Batch.PeriodEnd, StringFormat='yyyy-MM-dd'}" Foreground="#E65100"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="4"
+                                IsVisible="{Binding Batch.TablePrefix, Converter={StaticResource StringToBoolConverter}}">
+                        <TextBlock Text="🔤" FontSize="14"/>
+                        <TextBlock Text="前缀：" FontWeight="SemiBold" Foreground="#1A237E"/>
+                        <TextBlock Text="{Binding Batch.TablePrefix}" Foreground="#1565C0" FontFamily="Consolas"/>
+                    </StackPanel>
+                </WrapPanel>
+            </Border>
+
+            <!-- 操作按钮 -->
+            <StackPanel Grid.Row="2"
+                        Orientation="Horizontal"
+                        Spacing="8"
+                        Margin="0,0,0,8">
+                <Button Content="✅ 全选"
+                        Command="{Binding SelectAllCommand}"
+                        Classes="InfoButton"
+                        FontSize="12"
+                        Padding="10,5"/>
+                <Button Content="❌ 取消全选"
+                        Command="{Binding DeselectAllCommand}"
+                        Classes="DangerButton"
+                        FontSize="12"
+                        Padding="10,5"/>
+
+                <!-- 分类筛选 -->
+                <Border Background="#BBDEFB" Width="1" Margin="6,2"/>
+                <TextBlock Text="🔍 类型筛选："
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           Foreground="#1565C0"
+                           VerticalAlignment="Center"/>
+                <ComboBox ItemsSource="{Binding CategoryFilterOptions}"
+                          SelectedItem="{Binding SelectedCategoryFilter}"
+                          Width="160"
+                          Height="30"/>
+                <TextBlock Text="点击指标名称可切换选择"
+                           FontSize="11"
+                           Foreground="#BDBDBD"
+                           VerticalAlignment="Center"
+                           Margin="8,0,0,0"/>
+            </StackPanel>
+
+            <!-- 统计信息 -->
+            <StackPanel Grid.Row="3"
+                        Orientation="Horizontal"
+                        Spacing="20"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,8">
+                <Border Background="#E8F5E9"
+                        CornerRadius="10"
+                        Padding="10,4">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="✅" FontSize="12"/>
+                        <TextBlock Text="已选择：" FontSize="12" Foreground="#2E7D32"/>
+                        <TextBlock Text="{Binding SelectedCount}"
+                                   FontSize="12"
+                                   FontWeight="Bold"
+                                   Foreground="#1B5E20"/>
+                    </StackPanel>
+                </Border>
+                <Border Background="#F5F5F5"
+                        CornerRadius="10"
+                        Padding="10,4">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="📊" FontSize="12"/>
+                        <TextBlock Text="总数：" FontSize="12" Foreground="#616161"/>
+                        <TextBlock Text="{Binding TotalCount}"
+                                   FontSize="12"
+                                   FontWeight="Bold"
+                                   Foreground="#424242"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- 指标列表 -->
+            <Grid Grid.Row="4" Margin="0,0,0,8">
+                <Border BorderThickness="1"
+                        BorderBrush="#E0E0E0"
+                        CornerRadius="8"
+                        Background="White">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding FilteredIndicators}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="10,6"
+                                            BorderBrush="#F0F0F0"
+                                            BorderThickness="0,0,0,1">
+                                        <Grid ColumnDefinitions="30, *, Auto">
+                                            <CheckBox Grid.Column="0"
+                                                      IsChecked="{Binding IsSelected}"
+                                                      VerticalAlignment="Center"/>
+
+                                            <StackPanel Grid.Column="1"
+                                                        Margin="8,0,0,0"
+                                                        VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}"
+                                                           FontWeight="SemiBold"
+                                                           FontSize="13"
+                                                           Foreground="#1A237E"/>
+                                                <TextBlock Text="{Binding Description}"
+                                                           FontSize="11"
+                                                           Foreground="#78909C"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           IsVisible="{Binding Description, Converter={StaticResource StringToBoolConverter}}"/>
+                                                <TextBlock Text="没有描述"
+                                                           FontSize="11"
+                                                           Foreground="#BDBDBD"
+                                                           FontStyle="Italic"
+                                                           IsVisible="{Binding Description, Converter={StaticResource StringToBoolConverter}, ConverterParameter=Invert}"/>
+                                            </StackPanel>
+
+                                            <Border Grid.Column="2"
+                                                    Background="{Binding Category, Converter={StaticResource CategoryColorConverter}}"
+                                                    CornerRadius="4"
+                                                    Padding="8,3"
+                                                    VerticalAlignment="Center"
+                                                    HorizontalAlignment="Right">
+                                                <TextBlock Text="{Binding Category}"
+                                                           FontSize="10"
+                                                           Foreground="White"
+                                                           FontWeight="SemiBold"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+            <!-- SQL提示 -->
+            <Border Grid.Row="5"
+                    Background="#FFF8E1"
+                    CornerRadius="6"
+                    Padding="10"
+                    Margin="0,0,0,8"
+                    IsVisible="{Binding Indicators, Converter={StaticResource CollectionHasItemsConverter}}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="💡" FontSize="16"/>
+                    <TextBlock Text="提示：执行SQL时，将自动替换 @FXPC (表名前缀)、@FXQQ (期间开始)、@FXQZ (期间结束)"
+                               FontSize="11"
+                               Foreground="#795548"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 底部按钮 -->
+            <Grid Grid.Row="6" ColumnDefinitions="*, Auto, Auto" Margin="0,4,0,0">
+                <TextBlock Grid.Column="0"
+                           Text="{Binding StatusMessage}"
+                           FontSize="11"
+                           Foreground="#78909C"
+                           VerticalAlignment="Center"
+                           IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"/>
+                <Button Grid.Column="1"
+                        Content="取消"
+                        Command="{Binding CancelCommand}"
+                        Classes="SecondaryButton"
+                        Margin="0,0,8,0"/>
+                <Button Grid.Column="2"
+                        Content="🔍 开始扫描"
+                        Command="{Binding StartScanCommand}"
+                        Classes="PrimaryButton"
+                        IsEnabled="{Binding CanStartScan}"/>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

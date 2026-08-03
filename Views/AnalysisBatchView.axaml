@@ -1,0 +1,286 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:ExcelToSQLite.Converters"
+             x:Class="ExcelToSQLite.Views.AnalysisBatchView">
+
+    <Border Background="White" CornerRadius="12" Padding="24">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto">
+            <!-- 标题 -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,8">
+                <TextBlock Text="🧪" FontSize="28"/>
+                <StackPanel>
+                    <TextBlock Text="分析批次管理"
+                               FontSize="24"
+                               FontWeight="Bold"
+                               Foreground="#1A237E"/>
+                    <TextBlock Text="管理分析批次，用于组织数据扫描和分析任务"
+                               FontSize="13"
+                               Foreground="#78909C"
+                               Opacity="0.8"/>
+                </StackPanel>
+                <Border Background="#E8EAF6"
+                        CornerRadius="12"
+                        Padding="8,2"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="Beta"
+                               FontSize="10"
+                               Foreground="#3949AB"
+                               FontWeight="SemiBold"/>
+                </Border>
+            </StackPanel>
+
+            <!-- 操作按钮 -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12" Margin="0,0,0,8">
+                <Button Content="➕ 创建批次"
+                        Command="{Binding CreateBatchCommand}"
+                        Classes="PrimaryButton"/>
+                <Button Content="🔄 刷新列表"
+                        Command="{Binding RefreshCommand}"
+                        Classes="InfoButton"/>
+                <TextBlock Text="{Binding StatusMessage}"
+                           FontSize="12"
+                           Foreground="{Binding StatusColor}"
+                           VerticalAlignment="Center"
+                           Margin="10,0,0,0"/>
+            </StackPanel>
+
+            <!-- 列表标题 -->
+            <Grid Grid.Row="2" ColumnDefinitions="*, Auto" Margin="0,4,0,0">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="📋" FontSize="18"/>
+                    <TextBlock Text="已创建的批次"
+                               FontWeight="SemiBold"
+                               FontSize="16"
+                               Foreground="#1A237E"/>
+                </StackPanel>
+                <Border Background="#E8EAF6"
+                        CornerRadius="12"
+                        Padding="12,4">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="📊" FontSize="12"/>
+                        <TextBlock Text="{Binding Batches.Count, StringFormat='共 {0} 条记录'}"
+                                   FontSize="12"
+                                   Foreground="#3949AB"
+                                   FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- 列表表头 -->
+            <Border Grid.Row="3" Background="#EEF2F7" CornerRadius="8" Padding="12,10" Margin="0,4,0,0">
+                <Grid ColumnDefinitions="40, *, 100, 100, 120, 120, 200">
+                    <TextBlock Grid.Column="0"
+                               Text="#"
+                               FontWeight="Bold"
+                               FontSize="12"
+                               Foreground="#37474F"
+                               TextAlignment="Center"/>
+                    <TextBlock Grid.Column="1"
+                               Text="批次名称"
+                               FontWeight="Bold"
+                               FontSize="12"
+                               Foreground="#1A237E"/>
+                    <TextBlock Grid.Column="2"
+                               Text="期间开始"
+                               FontWeight="Bold"
+                               FontSize="12"
+                               Foreground="#1A237E"/>
+                    <TextBlock Grid.Column="3"
+                               Text="期间结束"
+                               FontWeight="Bold"
+                               FontSize="12"
+                               Foreground="#1A237E"/>
+                    <TextBlock Grid.Column="4"
+                               Text="表名前缀"
+                               FontWeight="Bold"
+                               FontSize="12"
+                               Foreground="#1A237E"/>
+                    <TextBlock Grid.Column="5"
+                               Text="创建时间"
+                               FontWeight="Bold"
+                               FontSize="12"
+                               Foreground="#1A237E"/>
+                    <TextBlock Grid.Column="6"
+                               Text="操作"
+                               FontWeight="Bold"
+                               FontSize="12"
+                               Foreground="#1A237E"
+                               TextAlignment="Center"/>
+                </Grid>
+            </Border>
+
+            <!-- 批次列表 填满剩余空间 -->
+            <ScrollViewer Grid.Row="4"
+                          BorderThickness="1"
+                          BorderBrush="#E0E0E0"
+                          CornerRadius="8"
+                          Margin="0,4,0,0">
+                <ListBox x:Name="BatchesListBox"
+                         ItemsSource="{Binding Batches}"
+                         Background="White"
+                         BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="8,6">
+                                <Grid ColumnDefinitions="40, *, 100, 100, 120, 120, 200">
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Index}"
+                                               VerticalAlignment="Center"
+                                               FontSize="12"
+                                               Foreground="#78909C"
+                                               TextAlignment="Center"/>
+
+                                    <StackPanel Grid.Column="1"
+                                                Orientation="Horizontal"
+                                                Spacing="6"
+                                                VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#1A237E"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <Border Background="#FFF3E0"
+                                                CornerRadius="10"
+                                                Padding="6,2"
+                                                IsVisible="{Binding IsScanning}">
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <TextBlock Text="⏳" FontSize="10"/>
+                                                <TextBlock Text="扫描中..."
+                                                           FontSize="9"
+                                                           Foreground="#E65100"
+                                                           FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <Border Grid.Column="2"
+                                            Background="#E8F5E9"
+                                            CornerRadius="4"
+                                            Padding="6,2"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding PeriodStart, StringFormat='yyyy-MM-dd'}"
+                                                   FontSize="12"
+                                                   Foreground="#2E7D32"/>
+                                    </Border>
+
+                                    <Border Grid.Column="3"
+                                            Background="#FFF3E0"
+                                            CornerRadius="4"
+                                            Padding="6,2"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding PeriodEnd, StringFormat='yyyy-MM-dd'}"
+                                                   FontSize="12"
+                                                   Foreground="#E65100"/>
+                                    </Border>
+
+                                    <Border Grid.Column="4"
+                                            Background="#E3F2FD"
+                                            CornerRadius="4"
+                                            Padding="6,2"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Center"
+                                            IsVisible="{Binding TablePrefix, Converter={StaticResource StringToBoolConverter}}">
+                                        <TextBlock Text="{Binding TablePrefix}"
+                                                   FontSize="12"
+                                                   FontFamily="Consolas"
+                                                   Foreground="#1565C0"
+                                                   FontWeight="SemiBold"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="4"
+                                               Text="(无前缀)"
+                                               FontSize="11"
+                                               Foreground="#BDBDBD"
+                                               FontStyle="Italic"
+                                               VerticalAlignment="Center"
+                                               IsVisible="{Binding TablePrefix, Converter={StaticResource StringToBoolConverter}, ConverterParameter=Invert}"/>
+
+                                    <TextBlock Grid.Column="5"
+                                               Text="{Binding CreatedAt, StringFormat='yyyy-MM-dd HH:mm'}"
+                                               VerticalAlignment="Center"
+                                               FontSize="11"
+                                               Foreground="#78909C"/>
+
+                                    <!-- 操作列 -->
+                                    <StackPanel Grid.Column="6"
+                                                Orientation="Horizontal"
+                                                Spacing="4"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center">
+                                        <!-- 扫描按钮 -->
+                                        <Button Command="{Binding DataContext.ScanCommand, ElementName=BatchesListBox}"
+                                                CommandParameter="{Binding}"
+                                                Classes="InfoButton"
+                                                FontSize="11"
+                                                Padding="8,4"
+                                                IsEnabled="{Binding IsScanning, Converter={StaticResource NotConverter}}">
+                                            <StackPanel Orientation="Horizontal" Spacing="3">
+                                                <TextBlock Text="🔍" FontSize="12"/>
+                                                <TextBlock Text="扫描" FontSize="11" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- 编辑按钮 -->
+                                        <Button Command="{Binding DataContext.EditCommand, ElementName=BatchesListBox}"
+                                                CommandParameter="{Binding}"
+                                                Classes="SmallButton"
+                                                FontSize="11"
+                                                Padding="8,4"
+                                                IsEnabled="{Binding IsScanning, Converter={StaticResource NotConverter}}">
+                                            <StackPanel Orientation="Horizontal" Spacing="3">
+                                                <TextBlock Text="✏️" FontSize="12"/>
+                                                <TextBlock Text="编辑" FontSize="11" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- 删除按钮 -->
+                                        <Button Command="{Binding DataContext.DeleteCommand, ElementName=BatchesListBox}"
+                                                CommandParameter="{Binding}"
+                                                Classes="DangerButton"
+                                                FontSize="11"
+                                                Padding="8,4"
+                                                IsEnabled="{Binding Id, Converter={StaticResource IsDefaultBatchConverter}, ConverterParameter=Invert}">
+                                            <StackPanel Orientation="Horizontal" Spacing="3">
+                                                <TextBlock Text="🗑️" FontSize="12"/>
+                                                <TextBlock Text="删除" FontSize="11" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </ScrollViewer>
+
+            <!-- 状态栏 -->
+            <Border Grid.Row="5"
+                    CornerRadius="8"
+                    Padding="14,10"
+                    Opacity="0.95"
+                    Background="{Binding StatusColor}"
+                    Margin="0,6,0,0">
+                <Grid ColumnDefinitions="*, Auto">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding StatusMessage}"
+                               Foreground="White"
+                               FontSize="13"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center"/>
+                    <Border Grid.Column="1"
+                            Background="White"
+                            CornerRadius="10"
+                            Padding="6,2"
+                            Margin="10,0,0,0"
+                            Opacity="0.8">
+                        <TextBlock Text="✓"
+                                   Foreground="{Binding StatusColor}"
+                                   FontSize="12"
+                                   FontWeight="Bold"/>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>
