@@ -235,7 +235,7 @@ namespace ExcelToSQLite.Services
             return new AppConfig
             {
                 SystemName = "智慧监督数据汇集分析平台",
-                Version = "1.0",
+                Version = PublicEvent.Version,
                 LastUpdated = DateTime.Now,
                 Categories = GetDefaultCategories(),
                 Values = new Dictionary<string, object>

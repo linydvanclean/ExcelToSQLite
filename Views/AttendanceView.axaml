@@ -31,19 +31,28 @@
                     <Border Background="#E3F2FD"
                             CornerRadius="8"
                             Padding="16,12">
-                        <StackPanel Orientation="Horizontal" Spacing="12">
-                            <TextBlock Text="📋" FontSize="32" VerticalAlignment="Center"/>
-                            <StackPanel>
-                                <TextBlock Text="出勤记录导入"
-                                           FontSize="22"
-                                           FontWeight="Bold"
-                                           Foreground="#0D47A1"/>
-                                <TextBlock Text="支持员工刷卡记录表格式，自动解析上下班打卡记录（支持多文件批量导入）"
-                                           FontSize="12"
-                                           Foreground="#1565C0"
-                                           Opacity="0.8"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <TextBlock Text="📋" FontSize="32" VerticalAlignment="Center"/>
+                                <StackPanel>
+                                    <TextBlock Text="出勤记录导入"
+                                               FontSize="22"
+                                               FontWeight="Bold"
+                                               Foreground="#0D47A1"/>
+                                    <TextBlock Text="支持员工刷卡记录表格式，自动解析上下班打卡记录（支持多文件批量导入）"
+                                               FontSize="12"
+                                               Foreground="#1565C0"
+                                               Opacity="0.8"/>
+                                </StackPanel>
                             </StackPanel>
-                        </StackPanel>
+                            <Button Grid.Column="1"
+                                    Content="📥 下载样表"
+                                    Command="{Binding DownloadTemplateCommand}"
+                                    Classes="PreviewButton"
+                                    VerticalAlignment="Center"
+                                    FontSize="13"
+                                    Padding="16,8"/>
+                        </Grid>
                     </Border>
 
                     <!-- ========== 文件选择区域 ========== -->
@@ -57,6 +66,7 @@
                                        FontWeight="SemiBold"
                                        Foreground="#1A237E"
                                        FontSize="14"/>
+                            
                             <Grid ColumnDefinitions="Auto,*,Auto">
                                 <TextBlock Grid.Column="0"
                                            Text="文件："

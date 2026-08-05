@@ -7,7 +7,7 @@ namespace ExcelToSQLite.Models;
 
 public class PublicEvent
 {
-    public const string Version = "1.0";
+    public const string Version = "1.1";
     public const string DeepseekBaseUrl = "https://api.deepseek.com/v1/chat/completions";
     public const string DeepseekDefaultModel = "deepseek-v4-flash";//""deepseek-v4-pro";
     

@@ -81,12 +81,14 @@ namespace ExcelToSQLite.ViewModels
 
         // 解析后的记录
         private List<FuelCardRecord> _allRecords = new();
+        
+        // 声明为可空类型以消除 CS8618 警告
+        public ReactiveCommand<Unit, Unit>? DownloadTemplateCommand { get; private set; }
 
         public FuelCardViewModel()
         {
             try
             {
-
                 _parserService = new FuelCardParserService();
                 _databaseService = DatabaseService.Instance;
                 _batchService = new AnalysisBatchService();
@@ -149,15 +151,128 @@ namespace ExcelToSQLite.ViewModels
                     })
                     .DisposeWith(_subscriptions);
                 
+                // 添加下载模板命令
+                DownloadTemplateCommand = ReactiveCommand.CreateFromTask(DownloadTemplateAsync);
+                DownloadTemplateCommand.ThrownExceptions
+                    .ObserveOn(RxApp.MainThreadScheduler)
+                    .Subscribe(ex =>
+                    {
+                        SetStatus($"下载模板失败: {ex.Message}", new SolidColorBrush(Colors.Red));
+                    })
+                    .DisposeWith(_subscriptions);
+                
                 // 启动异步初始化
                 _ = InitializeAsync();
-                
             }
             catch (Exception ex)
             {
                 SetStatusSafe($"初始化失败: {ex.Message}", new SolidColorBrush(Colors.Red));
             }
         }
+        
+        #region 下载模板
+
+        private async Task DownloadTemplateAsync()
+        {
+            if (_disposed || _isCleaned) return;
+            
+            try
+            {
+                // 获取模板文件的完整路径
+                string templateFileName = "Resources/Templates/中国石化加油IC卡台帐对帐单.xlsx";
+                string templatePath = Path.Combine(AppContext.BaseDirectory, templateFileName);
+                
+                // 检查文件是否存在
+                if (!File.Exists(templatePath))
+                {
+                    // 如果输出目录不存在，尝试从项目源目录复制
+                    string sourcePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Resources", "Templates", "中国石化加油IC卡台帐对帐单.xlsx");
+                    if (File.Exists(sourcePath))
+                    {
+                        // 确保目标目录存在
+                        string? targetDir = Path.GetDirectoryName(templatePath);
+                        if (!string.IsNullOrEmpty(targetDir) && !Directory.Exists(targetDir))
+                            Directory.CreateDirectory(targetDir);
+                        
+                        // 复制文件到输出目录
+                        File.Copy(sourcePath, templatePath, true);
+                    }
+                    else
+                    {
+                        await ShowErrorMessageAsync("未找到模板文件: 中国石化加油IC卡台帐对帐单.xlsx\n\n请确保文件已添加到 Resources/Templates/ 目录", "文件未找到");
+                        return;
+                    }
+                }
+                
+                // 让用户选择保存位置
+                var window = GetWindow();
+                if (window == null)
+                {
+                    await ShowErrorMessageAsync("无法获取窗口句柄", "错误");
+                    return;
+                }
+                
+                var storageProvider = window.StorageProvider;
+                if (storageProvider == null)
+                {
+                    await ShowErrorMessageAsync("无法获取文件存储服务", "错误");
+                    return;
+                }
+                
+                // 设置保存选项
+                var options = new Avalonia.Platform.Storage.FilePickerSaveOptions
+                {
+                    Title = "保存加油卡样表模板",
+                    SuggestedFileName = "中国石化加油IC卡台帐对帐单.xlsx",
+                    FileTypeChoices = new List<Avalonia.Platform.Storage.FilePickerFileType>
+                    {
+                        new("Excel 文件 (*.xlsx)") { Patterns = new List<string> { "*.xlsx" } }
+                    },
+                    DefaultExtension = ".xlsx"
+                };
+                
+                // 打开保存对话框
+                var file = await storageProvider.SaveFilePickerAsync(options);
+                if (file == null)
+                {
+                    // 用户取消了保存
+                    return;
+                }
+                
+                // 获取保存路径
+                var savePath = file.Path?.LocalPath ?? file.Name;
+                if (string.IsNullOrEmpty(savePath))
+                {
+                    await ShowErrorMessageAsync("获取保存路径失败", "错误");
+                    return;
+                }
+                
+                // 确保目标目录存在
+                string? saveDir = Path.GetDirectoryName(savePath);
+                if (!string.IsNullOrEmpty(saveDir) && !Directory.Exists(saveDir))
+                    Directory.CreateDirectory(saveDir);
+                
+                // 复制模板到目标位置
+                File.Copy(templatePath, savePath, true);
+                
+                SetStatus($"✅ 模板已保存到: {Path.GetFileName(savePath)}", new SolidColorBrush(Colors.Green));
+                
+                // 询问是否打开所在文件夹
+                var openFolder = await ShowConfirmDialogAsync($"模板已保存成功！\n\n是否打开文件所在文件夹？", "保存成功");
+                if (openFolder)
+                {
+                    // 打开文件夹
+                    System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{savePath}\"");
+                }
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorMessageAsync($"下载模板失败: {ex.Message}", "下载失败");
+                SetStatus($"❌ 下载失败: {ex.Message}", new SolidColorBrush(Colors.Red));
+            }
+        }
+
+        #endregion
 
         #region 公共方法
 
@@ -410,7 +525,6 @@ namespace ExcelToSQLite.ViewModels
             {
                 if (_disposed || _isCleaned) return;
 
-
                 _cts = new CancellationTokenSource();
                 var token = _cts.Token;
 
@@ -424,7 +538,6 @@ namespace ExcelToSQLite.ViewModels
                 {
                     SetStatus("初始化完成", new SolidColorBrush(Colors.Green));
                 }
-
             }
             catch (OperationCanceledException)
             {
@@ -552,7 +665,7 @@ namespace ExcelToSQLite.ViewModels
                 var window = GetWindow();
                 if (window == null)
                 {
-                    await ShowMessageBoxAsync("无法获取窗口句柄");
+                    await ShowErrorMessageAsync("无法获取窗口句柄", "错误");
                     return;
                 }
 
@@ -585,7 +698,7 @@ namespace ExcelToSQLite.ViewModels
             }
             catch (Exception ex)
             {
-                await ShowMessageBoxAsync($"选择文件失败: {ex.Message}");
+                await ShowErrorMessageAsync($"选择文件失败: {ex.Message}", "错误");
             }
         }
 
@@ -709,6 +822,13 @@ namespace ExcelToSQLite.ViewModels
                     
                     var summary = $"✅ 解析完成！共 {allRecords.Count} 条记录，{CardCount} 张卡，总金额 {TotalAmount:N2} 元";
                     SetStatus(summary, new SolidColorBrush(Colors.Green));
+                    
+                    // 如果有错误，显示警告
+                    if (fileResults.Any(r => r.Contains("❌")))
+                    {
+                        var errors = string.Join("\n", fileResults.Where(r => r.Contains("❌")));
+                        _ = ShowWarningMessageAsync($"部分文件解析失败:\n{errors}", "解析警告");
+                    }
                 });
             }
             catch (OperationCanceledException)
@@ -728,7 +848,7 @@ namespace ExcelToSQLite.ViewModels
                 await ThreadingHelper.RunOnUIThreadAsync(async () =>
                 {
                     if (_disposed || _isCleaned) return;
-                    await ShowMessageBoxAsync($"解析失败: {ex.Message}");
+                    await ShowErrorMessageAsync($"解析失败: {ex.Message}", "解析失败");
                     SetStatus($"❌ 解析失败: {ex.Message}", new SolidColorBrush(Colors.Red));
                     CanImport = false;
                     IsLoading = false;
@@ -850,37 +970,37 @@ namespace ExcelToSQLite.ViewModels
             {
                 if (string.IsNullOrEmpty(FilePath))
                 {
-                    await ShowMessageBoxAsync("请先选择Excel文件");
+                    await ShowWarningMessageAsync("请先选择Excel文件", "提示");
                     return;
                 }
 
                 if (SelectedBatch == null)
                 {
-                    await ShowMessageBoxAsync("请先选择分析批次");
+                    await ShowWarningMessageAsync("请先选择分析批次", "提示");
                     return;
                 }
 
                 if (string.IsNullOrEmpty(TableName))
                 {
-                    await ShowMessageBoxAsync("请输入表名或点击'自动生成'");
+                    await ShowWarningMessageAsync("请输入表名或点击'自动生成'", "提示");
                     return;
                 }
 
                 if (TableName.IndexOfAny(new[] { ' ', '-', '/', '\\', ':', '*', '?', '"', '<', '>', '|', '\'', ';' }) >= 0)
                 {
-                    await ShowMessageBoxAsync("表名包含非法字符，请使用字母、数字和下划线");
+                    await ShowWarningMessageAsync("表名包含非法字符，请使用字母、数字和下划线", "提示");
                     return;
                 }
 
                 if (!char.IsLetter(TableName[0]))
                 {
-                    await ShowMessageBoxAsync("表名应以字母开头");
+                    await ShowWarningMessageAsync("表名应以字母开头", "提示");
                     return;
                 }
 
                 if (_allRecords.Count == 0)
                 {
-                    await ShowMessageBoxAsync("没有可导入的数据");
+                    await ShowWarningMessageAsync("没有可导入的数据", "提示");
                     return;
                 }
 
@@ -904,7 +1024,7 @@ namespace ExcelToSQLite.ViewModels
 
                 confirmMessage += $"\n\n确认继续导入？";
 
-                var confirm = await ShowConfirmDialogAsync(confirmMessage);
+                var confirm = await ShowConfirmDialogAsync(confirmMessage, "确认导入");
                 if (!confirm) return;
 
                 await ThreadingHelper.RunOnUIThreadAsync(() =>
@@ -981,7 +1101,7 @@ namespace ExcelToSQLite.ViewModels
                     importedCount += batchRecords.Count;
                 }
 
-                await ThreadingHelper.RunOnUIThreadAsync(() =>
+                await ThreadingHelper.RunOnUIThreadAsync(async () =>
                 {
                     if (_disposed || _isCleaned) return;
 
@@ -999,6 +1119,8 @@ namespace ExcelToSQLite.ViewModels
                     ShowImportStats = true;
                     ImportStatsText = message;
 
+                    await ShowSuccessMessageAsync(message, "导入成功");
+
                     SetStatus($"✅ 导入成功: {importedCount} 条加油记录{(tableExists ? " (追加)" : "")}", new SolidColorBrush(Colors.Green));
                     IsLoading = false;
                     LoadingMessage = string.Empty;
@@ -1009,7 +1131,7 @@ namespace ExcelToSQLite.ViewModels
                 await ThreadingHelper.RunOnUIThreadAsync(async () =>
                 {
                     if (_disposed || _isCleaned) return;
-                    await ShowMessageBoxAsync($"导入失败: {ex.Message}");
+                    await ShowErrorMessageAsync($"导入失败: {ex.Message}", "导入失败");
                     SetStatus($"❌ 导入失败: {ex.Message}", new SolidColorBrush(Colors.Red));
                     IsLoading = false;
                     LoadingMessage = string.Empty;
@@ -1091,7 +1213,7 @@ namespace ExcelToSQLite.ViewModels
 
         #endregion
 
-        #region 对话框
+        #region 对话框（使用统一的 MessageBox）
 
         private Window? GetWindow()
         {
@@ -1104,135 +1226,76 @@ namespace ExcelToSQLite.ViewModels
             return null;
         }
 
-        private async Task ShowMessageBoxAsync(string message)
+        /// <summary>
+        /// 显示普通消息框
+        /// </summary>
+        private async Task ShowMessageBoxAsync(string message, string title = "提示", MessageBoxIcon icon = MessageBoxIcon.None)
         {
             if (_disposed || _isCleaned) return;
-
+            
             var window = GetWindow();
-            if (window == null) return;
-
-            await ThreadingHelper.RunOnUIThreadAsync(async () =>
+            if (window != null && window.IsVisible)
             {
-                if (_disposed || _isCleaned || !window.IsVisible) return;
-
-                var dialog = new Window
-                {
-                    Title = "提示",
-                    Width = 500,
-                    Height = 300,
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner
-                };
-
-                var button = new Button
-                {
-                    Content = "确定",
-                    Width = 80,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                    Classes = { "PrimaryButton" }
-                };
-
-                button.Click += (sender, e) => dialog.Close();
-
-                var textBlock = new TextBlock
-                {
-                    Text = message,
-                    TextWrapping = Avalonia.Media.TextWrapping.Wrap,
-                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left
-                };
-
-                dialog.Content = new StackPanel
-                {
-                    Margin = new Avalonia.Thickness(20),
-                    Spacing = 15,
-                    Children =
-                    {
-                        textBlock,
-                        button
-                    }
-                };
-
-                await dialog.ShowDialog(window);
-            });
+                await MessageBox.ShowAsync(window, message, title, MessageBoxButtons.OK, icon);
+            }
+            else
+            {
+                await MessageBox.ShowAsync(message, title, MessageBoxButtons.OK, icon);
+            }
         }
 
-        private async Task<bool> ShowConfirmDialogAsync(string message)
+        /// <summary>
+        /// 显示确认对话框
+        /// </summary>
+        private async Task<bool> ShowConfirmDialogAsync(string message, string title = "确认操作")
         {
             if (_disposed || _isCleaned) return false;
-
+            
             var window = GetWindow();
-            if (window == null) return false;
-
-            return await ThreadingHelper.RunOnUIThreadAsync(async () =>
+            MessageBoxResult result;
+            
+            if (window != null && window.IsVisible)
             {
-                if (_disposed || _isCleaned || !window.IsVisible) return false;
+                result = await MessageBox.ShowAsync(window, message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            }
+            else
+            {
+                result = await MessageBox.ShowAsync(message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            }
+            
+            return result == MessageBoxResult.Yes;
+        }
 
-                var tcs = new TaskCompletionSource<bool>();
-                
-                var dialog = new Window
-                {
-                    Title = "确认导入",
-                    Width = 550,
-                    Height = 400,
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner
-                };
+        /// <summary>
+        /// 显示成功消息
+        /// </summary>
+        private async Task ShowSuccessMessageAsync(string message, string title = "成功")
+        {
+            await ShowMessageBoxAsync(message, title, MessageBoxIcon.Success);
+        }
 
-                var textBlock = new TextBlock 
-                { 
-                    Text = message, 
-                    TextWrapping = Avalonia.Media.TextWrapping.Wrap,
-                    Margin = new Avalonia.Thickness(0, 0, 0, 10),
-                    FontSize = 13
-                };
+        /// <summary>
+        /// 显示错误消息
+        /// </summary>
+        private async Task ShowErrorMessageAsync(string message, string title = "错误")
+        {
+            await ShowMessageBoxAsync(message, title, MessageBoxIcon.Error);
+        }
 
-                var buttonPanel = new StackPanel
-                {
-                    Orientation = Avalonia.Layout.Orientation.Horizontal,
-                    Spacing = 10,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
-                };
+        /// <summary>
+        /// 显示警告消息
+        /// </summary>
+        private async Task ShowWarningMessageAsync(string message, string title = "警告")
+        {
+            await ShowMessageBoxAsync(message, title, MessageBoxIcon.Warning);
+        }
 
-                var confirmButton = new Button 
-                { 
-                    Content = "✅ 确认导入", 
-                    Width = 120,
-                    Classes = { "PrimaryButton" }
-                };
-                confirmButton.Click += (s, e) => 
-                {
-                    tcs.SetResult(true);
-                    dialog.Close();
-                };
-
-                var cancelButton = new Button 
-                { 
-                    Content = "❌ 取消", 
-                    Width = 100,
-                    Classes = { "DangerButton" }
-                };
-                cancelButton.Click += (s, e) => 
-                {
-                    tcs.SetResult(false);
-                    dialog.Close();
-                };
-
-                buttonPanel.Children.Add(confirmButton);
-                buttonPanel.Children.Add(cancelButton);
-                
-                dialog.Content = new StackPanel
-                {
-                    Margin = new Avalonia.Thickness(20),
-                    Spacing = 15,
-                    Children =
-                    {
-                        textBlock,
-                        buttonPanel
-                    }
-                };
-
-                await dialog.ShowDialog(window);
-                return await tcs.Task;
-            });
+        /// <summary>
+        /// 显示信息消息
+        /// </summary>
+        private async Task ShowInfoMessageAsync(string message, string title = "提示")
+        {
+            await ShowMessageBoxAsync(message, title, MessageBoxIcon.Information);
         }
 
         #endregion
@@ -1245,7 +1308,6 @@ namespace ExcelToSQLite.ViewModels
 
             try
             {
-
                 CancelCurrentOperation();
 
                 _lock.Wait(TimeSpan.FromSeconds(2));

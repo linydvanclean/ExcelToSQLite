@@ -36,7 +36,7 @@ public class DataDictionaryImportExportService : IDisposable
         {
             var exportData = new DataDictionaryExportData
             {
-                Version = "1.0",
+                Version = PublicEvent.Version,
                 ExportTime = DateTime.Now,
                 ExportedBy = exportedBy,
                 Dictionaries = dictionaries.Select(d => new DataDictionaryItem

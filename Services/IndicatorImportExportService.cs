@@ -138,7 +138,7 @@ public class IndicatorImportExportService : IDisposable
 
             var exportData = new IndicatorExportData
             {
-                Version = "1.0",
+                Version = PublicEvent.Version,
                 ExportTime = DateTime.Now,
                 ExportedBy = exportedBy,
                 ExportSummary = new ExportSummary
@@ -148,7 +148,7 @@ public class IndicatorImportExportService : IDisposable
                     EmptySqlDetailData = emptySqlDetailData,
                     ExportTime = DateTime.Now,
                     ExportedBy = exportedBy,
-                    Version = "1.0"
+                    Version = PublicEvent.Version
                 },
                 Indicators = indicators.Select(i => new IndicatorExportItem
                 {

@@ -35,19 +35,28 @@
                     <Border Background="#E8F5E9"
                             CornerRadius="8"
                             Padding="16,12">
-                        <StackPanel Orientation="Horizontal" Spacing="12">
-                            <TextBlock Text="⛽" FontSize="32" VerticalAlignment="Center"/>
-                            <StackPanel>
-                                <TextBlock Text="加油卡记录导入"
-                                           FontSize="22"
-                                           FontWeight="Bold"
-                                           Foreground="#1B5E20"/>
-                                <TextBlock Text="支持中国石化加油IC卡台帐对账单格式，自动解析每位卡号的加油记录"
-                                           FontSize="12"
-                                           Foreground="#2E7D32"
-                                           Opacity="0.8"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <TextBlock Text="⛽" FontSize="32" VerticalAlignment="Center"/>
+                                <StackPanel>
+                                    <TextBlock Text="加油卡记录导入"
+                                               FontSize="22"
+                                               FontWeight="Bold"
+                                               Foreground="#1B5E20"/>
+                                    <TextBlock Text="支持中国石化加油IC卡台帐对账单格式，自动解析每位卡号的加油记录"
+                                               FontSize="12"
+                                               Foreground="#2E7D32"
+                                               Opacity="0.8"/>
+                                </StackPanel>
                             </StackPanel>
-                        </StackPanel>
+                            <Button Grid.Column="1"
+                                    Content="📥 下载样表"
+                                    Command="{Binding DownloadTemplateCommand}"
+                                    Classes="PreviewButton"
+                                    VerticalAlignment="Center"
+                                    FontSize="13"
+                                    Padding="16,8"/>
+                        </Grid>
                     </Border>
 
                     <!-- ========== 文件选择区域（支持多文件） ========== -->
