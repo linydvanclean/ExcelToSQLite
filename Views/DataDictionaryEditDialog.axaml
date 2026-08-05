@@ -2,13 +2,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:converters="clr-namespace:ExcelToSQLite.Converters"
         mc:Ignorable="d"
         d:DesignWidth="580"
-        d:DesignHeight="480"
+        d:DesignHeight="520"
         x:Class="ExcelToSQLite.Views.DataDictionaryEditDialog"
         Title="{Binding DialogTitle}"
         Width="580"
-        Height="480"
+        Height="520"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
         Background="White">
@@ -27,6 +28,12 @@
         <Style Selector="Button.PrimaryButton:pointerover">
             <Setter Property="Background" Value="#43A047"/>
         </Style>
+        <Style Selector="Button.PrimaryButton:disabled">
+            <Setter Property="Background" Value="#A5D6A7"/>
+            <Setter Property="Foreground" Value="#E8F5E9"/>
+            <!-- 移除 Cursor 设置，或改为 Arrow -->
+            <Setter Property="Cursor" Value="Arrow"/>
+        </Style>
 
         <Style Selector="Button.DangerButton">
             <Setter Property="Background" Value="#D32F2F"/>
@@ -40,6 +47,11 @@
         </Style>
         <Style Selector="Button.DangerButton:pointerover">
             <Setter Property="Background" Value="#C62828"/>
+        </Style>
+        <Style Selector="Button.DangerButton:disabled">
+            <Setter Property="Background" Value="#EF9A9A"/>
+            <Setter Property="Foreground" Value="#F5F5F5"/>
+            <Setter Property="Cursor" Value="Arrow"/>
         </Style>
 
         <Style Selector="Button.InfoButton">
@@ -128,7 +140,7 @@
                            Margin="0,4,0,4"/>
                 <TextBox Grid.Row="1" Grid.Column="1"
                          Text="{Binding TableName}"
-                         PlaceholderText="请输入数据表名（仅字母、数字、下划线）"
+                         PlaceholderText="请输入数据表名（中文、字母、数字、下划线）"
                          Height="36"
                          Margin="0,4,0,4"/>
 
@@ -151,6 +163,32 @@
 
             <Separator Margin="0,4,0,0"/>
 
+            <!-- ========== 状态栏（完全按照主页面风格） ========== -->
+            <Border Background="#FFF8E1" 
+                    CornerRadius="6" 
+                    Padding="14,8" 
+                    BorderBrush="#FFE082" 
+                    BorderThickness="1" 
+                    Margin="0,0,0,0"
+                    IsVisible="{Binding ShowStatus}">
+                <Grid ColumnDefinitions="*, Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="📌 状态：" 
+                                   FontSize="12" 
+                                   FontWeight="SemiBold" 
+                                   Foreground="#E65100"/>
+                        <TextBlock Text="{Binding ErrorMessage}" 
+                                   FontSize="12" 
+                                   Foreground="{Binding StatusColor}" 
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="4" Grid.Column="1" IsVisible="{Binding IsSaving}">
+                        <TextBlock Text="⏳" FontSize="12"/>
+                        <TextBlock Text="保存中..." FontSize="12" Foreground="#78909C"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
             <!-- ========== 按钮区域 ========== -->
             <StackPanel Orientation="Horizontal"
                         Spacing="12"
@@ -158,10 +196,20 @@
                         Margin="0,4,0,0">
                 <Button Content="取消"
                         Command="{Binding CancelCommand}"
+                        IsEnabled="{Binding IsSaving, Converter={x:Static converters:NotConverter.Instance}}"
                         Classes="DangerButton"/>
-                <Button Content="💾 保存"
-                        Command="{Binding SaveCommand}"
-                        Classes="PrimaryButton"/>
+                <Button Command="{Binding SaveCommand}"
+                        IsEnabled="{Binding IsSaving, Converter={x:Static converters:NotConverter.Instance}}"
+                        Classes="PrimaryButton">
+                    <Button.Styles>
+                        <Style Selector="Button">
+                            <Setter Property="Content" Value="💾 保存"/>
+                        </Style>
+                        <Style Selector="Button:disabled">
+                            <Setter Property="Content" Value="⏳ 保存中..."/>
+                        </Style>
+                    </Button.Styles>
+                </Button>
             </StackPanel>
 
         </StackPanel>

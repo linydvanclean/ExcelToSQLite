@@ -2,10 +2,89 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:converters="clr-namespace:ExcelToSQLite.Converters"
              mc:Ignorable="d"
              d:DesignWidth="720"
-             d:DesignHeight="640"
+             d:DesignHeight="680"
              x:Class="ExcelToSQLite.Views.IndicatorEditDialog">
+
+    <UserControl.Styles>
+        <!-- 按钮样式 -->
+        <Style Selector="Button.PrimaryButton">
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="MinWidth" Value="90"/>
+        </Style>
+        <Style Selector="Button.PrimaryButton:pointerover">
+            <Setter Property="Background" Value="#43A047"/>
+        </Style>
+
+        <Style Selector="Button.SecondaryButton">
+            <Setter Property="Background" Value="#F5F5F5"/>
+            <Setter Property="Foreground" Value="#424242"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="MinWidth" Value="90"/>
+        </Style>
+        <Style Selector="Button.SecondaryButton:pointerover">
+            <Setter Property="Background" Value="#E0E0E0"/>
+        </Style>
+
+        <Style Selector="Button.InfoButton">
+            <Setter Property="Background" Value="#2196F3"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style Selector="Button.InfoButton:pointerover">
+            <Setter Property="Background" Value="#1976D2"/>
+        </Style>
+
+        <Style Selector="Button.PreviewButton">
+            <Setter Property="Background" Value="#FF9800"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style Selector="Button.PreviewButton:pointerover">
+            <Setter Property="Background" Value="#F57C00"/>
+        </Style>
+
+        <!-- 文本框样式 -->
+        <Style Selector="TextBox">
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#D0D0D0"/>
+        </Style>
+        <Style Selector="TextBox:focus">
+            <Setter Property="BorderBrush" Value="#2196F3"/>
+        </Style>
+
+        <!-- 标签页样式 -->
+        <Style Selector="TabItem">
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="TabItem:selected">
+            <Setter Property="Foreground" Value="#1A237E"/>
+        </Style>
+    </UserControl.Styles>
 
     <Border Background="White"
             CornerRadius="12"
@@ -13,89 +92,83 @@
         <DockPanel>
             <!-- 底部按钮区域 -->
             <StackPanel DockPanel.Dock="Bottom"
-                        Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right"
+                        Orientation="Horizontal" 
+                        Spacing="12" 
+                        HorizontalAlignment="Right"
                         Margin="0,12,0,0">
+                <Button Content="🔍 数据预览"
+                        Command="{Binding PreviewCommand}"
+                        Classes="PreviewButton"
+                        IsEnabled="{Binding CanPreview}"/>
+                
                 <Button Content="取消"
                         Command="{Binding CancelCommand}"
                         Classes="SecondaryButton"/>
-                <Button Content="保存指标"
+                <Button Content="💾 保存指标"
                         Command="{Binding SaveCommand}"
                         Classes="PrimaryButton"/>
             </StackPanel>
 
             <!-- 主内容区域 -->
             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Spacing="14">
+                <StackPanel Spacing="12">
 
-                    <!-- 标题 -->
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <TextBlock Text="📊" FontSize="28" VerticalAlignment="Center"/>
-                        <StackPanel>
-                            <TextBlock Text="{Binding DialogTitle}"
-                                       FontSize="22"
-                                       FontWeight="Bold"
-                                       Foreground="#1A237E"/>
-                            <TextBlock Text="{Binding DialogSubtitle}"
-                                       FontSize="13"
-                                       Foreground="#78909C"
-                                       Opacity="0.8"/>
+                    <!-- ========== 标题区域 ========== -->
+                    <Border Background="#E3F2FD"
+                            CornerRadius="8"
+                            Padding="16,12">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="📊" FontSize="32" VerticalAlignment="Center"/>
+                            <StackPanel>
+                                <TextBlock Text="{Binding DialogTitle}"
+                                           FontSize="22"
+                                           FontWeight="Bold"
+                                           Foreground="#0D47A1"/>
+                                <TextBlock Text="{Binding DialogSubtitle}"
+                                           FontSize="12"
+                                           Foreground="#1565C0"
+                                           Opacity="0.8"/>
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
+                    </Border>
 
-                    <!-- 表单 -->
+                    <!-- ========== 基础信息表单 ========== -->
                     <Border Background="#F8F9FA"
                             CornerRadius="8"
-                            Padding="16"
+                            Padding="14,10"
                             BorderBrush="#E0E0E0"
                             BorderThickness="1">
-                        <Grid RowDefinitions="Auto, Auto, Auto"
-                              ColumnDefinitions="Auto, *">
-
-                            <!-- 指标名称 -->
+                        <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto">
                             <TextBlock Grid.Row="0" Grid.Column="0"
                                        VerticalAlignment="Center"
                                        Foreground="#546E7A"
                                        FontSize="13"
                                        FontWeight="SemiBold"
-                                       Margin="0,8,16,8">指标名称</TextBlock>
+                                       Margin="0,6,16,6">📝 指标名称</TextBlock>
                             <TextBox Grid.Row="0" Grid.Column="1"
                                      Text="{Binding IndicatorName}"
                                      PlaceholderText="请输入指标名称..."
+                                     Height="34"
                                      Margin="0,4,0,4"/>
 
-                            <!-- 分类 -->
                             <TextBlock Grid.Row="1" Grid.Column="0"
                                        VerticalAlignment="Center"
                                        Foreground="#546E7A"
                                        FontSize="13"
                                        FontWeight="SemiBold"
-                                       Margin="0,8,16,8">分类</TextBlock>
+                                       Margin="0,6,16,6">📂 分类</TextBlock>
                             <ComboBox Grid.Row="1" Grid.Column="1"
                                       ItemsSource="{Binding CategoryOptions}"
                                       SelectedItem="{Binding IndicatorCategory}"
+                                      Height="34"
                                       Margin="0,4,0,4"/>
-
-                            <!-- 描述 -->
-                            <TextBlock Grid.Row="2" Grid.Column="0"
-                                       VerticalAlignment="Top"
-                                       Foreground="#546E7A"
-                                       FontSize="13"
-                                       FontWeight="SemiBold"
-                                       Margin="0,8,16,4">描述</TextBlock>
-                            <TextBox Grid.Row="2" Grid.Column="1"
-                                     Text="{Binding IndicatorDescription}"
-                                     PlaceholderText="请输入指标描述信息..."
-                                     AcceptsReturn="True"
-                                     TextWrapping="Wrap"
-                                     Height="50"
-                                     Margin="0,4,0,4"/>
                         </Grid>
                     </Border>
 
-                    <!-- ========== SQL 标签页区域 ========== -->
-                    <StackPanel Spacing="8">
+                    <!-- ========== 三标签页内容区域 ========== -->
+                    <StackPanel Spacing="6">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="📝 SQL 编辑"
+                            <TextBlock Text="📝 内容编辑"
                                        FontWeight="SemiBold"
                                        Foreground="#1A237E"
                                        FontSize="12"
@@ -104,67 +177,57 @@
                                     CornerRadius="10"
                                     Padding="8,2"
                                     VerticalAlignment="Center">
-                                <TextBlock Text="支持多行编辑，SQL为空时也可正常保存"
+                                <TextBlock Text="描述 → 统计SQL → 详细SQL"
                                            FontSize="10"
                                            Foreground="#3949AB"/>
                             </Border>
                         </StackPanel>
 
                         <TabControl SelectedIndex="{Binding SelectedTabIndex}"
-                                    Height="260">
+                                    Height="300">
+                            <!-- 标签页1：指标描述 -->
+                            <TabItem Header="📝 指标描述">
+                                <Border BorderThickness="0" Padding="6">
+                                    <TextBox Text="{Binding IndicatorDescription}"
+                                             PlaceholderText="请用自然语言描述您的指标分析需求...&#x0a;&#x0a;例如：&#x0a;统计各部门每月的经费使用总额，并按部门分组汇总"
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             FontSize="14"
+                                             Height="250"
+                                             VerticalAlignment="Stretch"/>
+                                </Border>
+                            </TabItem>
+
+                            <!-- 标签页2：统计SQL -->
                             <TabItem Header="📊 统计SQL">
-                                <Border BorderThickness="0" Padding="4">
+                                <Border BorderThickness="0" Padding="6">
                                     <TextBox Text="{Binding IndicatorSqlStatement}"
                                              PlaceholderText="请输入统计查询SQL语句，例如：&#x0a;SELECT COUNT(*) as RecordCount, Category&#x0a;FROM YourTable&#x0a;GROUP BY Category"
                                              AcceptsReturn="True"
                                              TextWrapping="Wrap"
                                              FontFamily="Consolas, Courier New, monospace"
-                                             FontSize="16"
-                                             Height="210"
+                                             FontSize="14"
+                                             Height="250"
                                              VerticalAlignment="Stretch"/>
                                 </Border>
                             </TabItem>
+
+                            <!-- 标签页3：详细SQL -->
                             <TabItem Header="📋 详细SQL">
-                                <Border BorderThickness="0" Padding="4">
+                                <Border BorderThickness="0" Padding="6">
                                     <TextBox Text="{Binding IndicatorSqlDetailData}"
                                              PlaceholderText="请输入详细数据查询SQL语句，例如：&#x0a;SELECT *&#x0a;FROM YourTable&#x0a;WHERE 1=1&#x0a;ORDER BY Id"
                                              AcceptsReturn="True"
                                              TextWrapping="Wrap"
                                              FontFamily="Consolas, Courier New, monospace"
-                                             FontSize="16"
-                                             Height="210"
+                                             FontSize="14"
+                                             Height="250"
                                              VerticalAlignment="Stretch"/>
                                 </Border>
                             </TabItem>
                         </TabControl>
                     </StackPanel>
-
-                    <!-- ========== 数据预览按钮 ========== -->
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Content="🔍 数据预览"
-                                Command="{Binding PreviewCommand}"
-                                Classes="PreviewButton">
-                            <ToolTip.Tip>
-                                <ToolTip Content="预览当前标签页中SQL语句的查询结果"/>
-                            </ToolTip.Tip>
-                        </Button>
-                        <TextBlock Text="预览当前选中的SQL标签页查询结果"
-                                   FontSize="11"
-                                   Foreground="#78909C"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-
-                    <!-- 提示 -->
-                    <Border Background="#FFF8E1"
-                            CornerRadius="4"
-                            Padding="8">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="💡 提示：" FontWeight="Bold" Foreground="#E65100"/>
-                            <TextBlock Text="SQL语句支持所有标准SQL语法。SQL字段可以为空，保存时将正常处理。"
-                                       FontSize="12" Foreground="#BF360C"/>
-                        </StackPanel>
-                    </Border>
-
+                    
                 </StackPanel>
             </ScrollViewer>
         </DockPanel>

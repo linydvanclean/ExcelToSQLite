@@ -1,5 +1,50 @@
-echo "# C# 项目忽略文件" > .gitignore
-echo "obj/" >> .gitignore
-echo "bin/" >> .gitignore
-echo "*.user" >> .gitignore
-echo "*.suo" >> .gitignore
+﻿# .NET 编译输出
+bin/
+obj/
+*.exe
+*.dll
+*.pdb
+*.so
+*.dylib
+
+# 用户配置文件
+*.user
+*.userprefs
+*.suo
+*.cache
+*.bak
+*.tmp
+
+# Visual Studio / Rider 配置
+.idea/
+.vs/
+.vscode/
+*.swp
+*.swo
+
+# 日志和临时文件
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# 发布和打包文件
+/publish/
+*.nupkg
+*.nuget.props
+*.nuget.targets
+
+# 测试结果
+TestResults/
+*.coverage
+*.trx
+
+# 本地环境变量
+.env
+launchSettings.json
+appsettings.Development.json
+appsettings.Local.json
+
+# 操作系统生成文件
+Thumbs.db
+.DS_Store

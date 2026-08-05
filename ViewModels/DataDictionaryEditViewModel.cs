@@ -23,6 +23,7 @@ public class DataDictionaryEditViewModel : ReactiveObject, IDisposable
     private bool _showStatus = false;
     private bool _isDisposed;
     private bool _isClosed = false;
+    private IBrush _statusColor = new SolidColorBrush(Color.Parse("#C62828"));
 
     private Window? _dialogWindow;
 
@@ -90,6 +91,12 @@ public class DataDictionaryEditViewModel : ReactiveObject, IDisposable
         set => this.RaiseAndSetIfChanged(ref _showStatus, value);
     }
 
+    public IBrush StatusColor
+    {
+        get => _statusColor;
+        set => this.RaiseAndSetIfChanged(ref _statusColor, value);
+    }
+
     #endregion
 
     #region 公共属性
@@ -155,88 +162,140 @@ public class DataDictionaryEditViewModel : ReactiveObject, IDisposable
 
         try
         {
+            // 1. 设置保存状态
             await ThreadingHelper.RunOnUIThreadAsync(() =>
             {
                 IsSaving = true;
                 ClearError();
                 ShowStatus = true;
+                StatusColor = new SolidColorBrush(Color.Parse("#1565C0")); // 蓝色表示正在处理
             });
 
-            // 验证名称
-            if (string.IsNullOrWhiteSpace(Name))
+            // 2. 验证输入
+            if (!await ValidateInputAsync())
             {
-                await SetErrorAsync("请输入数据字典名称");
                 return;
             }
 
-            // 验证表名（如果有值）
-            if (!string.IsNullOrWhiteSpace(TableName) &&
-                !Regex.IsMatch(TableName, @"^[a-zA-Z0-9_]+$"))
-            {
-                await SetErrorAsync("表名只能包含字母、数字和下划线");
-                return;
-            }
-
+            // 3. 执行保存
             if (OnSave != null)
             {
-                var dictionary = new DataDictionary
-                {
-                    Id = EditingDictionary?.Id ?? Guid.NewGuid().ToString(),
-                    Name = Name.Trim(),
-                    TableName = TableName?.Trim() ?? string.Empty,
-                    Description = Description?.Trim() ?? string.Empty,
-                    CreatedAt = EditingDictionary?.CreatedAt ?? DateTime.Now,
-                    UpdatedAt = DateTime.Now,
-                    CreatedBy = EditingDictionary?.CreatedBy ?? "admin",
-                    IsActive = true
-                };
-
+                var dictionary = BuildDictionary();
                 var result = await OnSave(dictionary);
-                
+
                 if (result)
                 {
+                    // 保存成功
                     _isClosed = true;
-                    
                     await ThreadingHelper.RunOnUIThreadAsync(() =>
                     {
                         IsSaving = false;
-                        // ✅ 关闭窗口，传递 true 表示保存成功
+                        ShowStatus = false;
                         OnClose?.Invoke(true);
                     });
                 }
                 else
                 {
-                    await ThreadingHelper.RunOnUIThreadAsync(() =>
-                    {
-                        IsSaving = false;
-                        HasError = true;
-                        ErrorMessage = "保存失败，请重试";
-                        ShowStatus = true;
-                    });
+                    // 保存失败
+                    await SetErrorAsync("保存失败，请重试");
+                    await ResetSavingStateAsync();
                 }
             }
         }
         catch (Exception ex)
         {
             await SetErrorAsync($"保存失败: {ex.Message}");
-            
-            await ThreadingHelper.RunOnUIThreadAsync(() =>
-            {
-                IsSaving = false;
-            });
+            await ResetSavingStateAsync();
         }
+    }
+
+    /// <summary>
+    /// 验证输入
+    /// </summary>
+    private async Task<bool> ValidateInputAsync()
+    {
+        // 验证名称（必填）
+        if (string.IsNullOrWhiteSpace(Name))
+        {
+            await SetErrorAsync("请输入数据字典名称");
+            await ResetSavingStateAsync();
+            return false;
+        }
+
+        // 表名验证：允许为空，但如果有值必须符合规范
+        if (!string.IsNullOrWhiteSpace(TableName))
+        {
+            var trimmedTableName = TableName.Trim();
+
+            // 检查是否包含空格（包括全角空格）
+            if (trimmedTableName.Contains(' ') || trimmedTableName.Contains('\u3000'))
+            {
+                await SetErrorAsync("表名不能包含空格或全角空格");
+                await ResetSavingStateAsync();
+                return false;
+            }
+
+            // 检查是否包含其他空白字符
+            if (Regex.IsMatch(trimmedTableName, @"\s"))
+            {
+                await SetErrorAsync("表名不能包含空白字符（如制表符、换行符等）");
+                await ResetSavingStateAsync();
+                return false;
+            }
+
+            // 检查是否符合命名规范：以中文、字母或下划线开头，只能包含中文、字母、数字、下划线
+            if (!Regex.IsMatch(trimmedTableName, @"^[\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*$"))
+            {
+                await SetErrorAsync("表名必须以中文、字母或下划线开头，只能包含中文、字母、数字和下划线");
+                await ResetSavingStateAsync();
+                return false;
+            }
+
+            // 更新为清理后的值
+            TableName = trimmedTableName;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 构建数据字典对象
+    /// </summary>
+    private DataDictionary BuildDictionary()
+    {
+        return new DataDictionary
+        {
+            Id = EditingDictionary?.Id ?? Guid.NewGuid().ToString(),
+            Name = Name.Trim(),
+            TableName = TableName,
+            Description = Description?.Trim() ?? string.Empty,
+            CreatedAt = EditingDictionary?.CreatedAt ?? DateTime.Now,
+            UpdatedAt = DateTime.Now,
+            CreatedBy = EditingDictionary?.CreatedBy ?? "admin",
+            IsActive = true
+        };
+    }
+
+    /// <summary>
+    /// 重置保存状态
+    /// </summary>
+    private async Task ResetSavingStateAsync()
+    {
+        await ThreadingHelper.RunOnUIThreadAsync(() =>
+        {
+            IsSaving = false;
+        });
     }
 
     private void Cancel()
     {
         if (_isClosed) return;
-        
+
         ThreadingHelper.RunOnUIThreadAsync(() =>
         {
             try
             {
                 _isClosed = true;
-                // ✅ 取消操作，传递 false
                 OnClose?.Invoke(false);
             }
             catch
@@ -262,6 +321,29 @@ public class DataDictionaryEditViewModel : ReactiveObject, IDisposable
             HasError = true;
             ErrorMessage = message;
             ShowStatus = true;
+            StatusColor = new SolidColorBrush(Color.Parse("#C62828")); // 红色表示错误
+        });
+    }
+
+    private async Task SetSuccessAsync(string message)
+    {
+        await ThreadingHelper.RunOnUIThreadAsync(() =>
+        {
+            HasError = false;
+            ErrorMessage = message;
+            ShowStatus = true;
+            StatusColor = new SolidColorBrush(Color.Parse("#2E7D32")); // 绿色表示成功
+        });
+    }
+
+    private async Task SetInfoAsync(string message)
+    {
+        await ThreadingHelper.RunOnUIThreadAsync(() =>
+        {
+            HasError = false;
+            ErrorMessage = message;
+            ShowStatus = true;
+            StatusColor = new SolidColorBrush(Color.Parse("#0D47A1")); // 蓝色表示信息
         });
     }
 

@@ -82,11 +82,15 @@ public class IndicatorEditViewModel : ReactiveObject, IDisposable
         get => _indicatorCategory;
         set => this.RaiseAndSetIfChanged(ref _indicatorCategory, value);
     }
-
+    public bool CanPreview => SelectedTabIndex != 0; // 0 = 指标描述标签页
     public int SelectedTabIndex
     {
         get => _selectedTabIndex;
-        set => this.RaiseAndSetIfChanged(ref _selectedTabIndex, value);
+        set 
+        {
+            this.RaiseAndSetIfChanged(ref _selectedTabIndex, value);
+            this.RaisePropertyChanged(nameof(CanPreview));
+        }
     }
 
     public string DialogTitle
@@ -109,7 +113,7 @@ public class IndicatorEditViewModel : ReactiveObject, IDisposable
             this.RaiseAndSetIfChanged(ref _isEditing, value);
             UpdateDialogTitle();
         }
-    }
+    }   
 
     #endregion
 

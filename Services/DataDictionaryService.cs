@@ -473,10 +473,28 @@ public class DataDictionaryService : IDisposable
         if (string.IsNullOrEmpty(dictionary.Name))
             throw new ArgumentException("数据字典名称不能为空", nameof(dictionary));
 
-        if (!string.IsNullOrEmpty(dictionary.TableName) &&
-            !Regex.IsMatch(dictionary.TableName, @"^[a-zA-Z0-9_]+$"))
+        // ✅ 表名验证：允许为空，如果有值必须符合规范（支持中文）
+        if (!string.IsNullOrEmpty(dictionary.TableName))
         {
-            throw new ArgumentException("数据表名只能包含字母、数字和下划线", nameof(dictionary));
+            var tableName = dictionary.TableName.Trim();
+        
+            // 检查是否包含空格
+            if (tableName.Contains(' '))
+            {
+                throw new ArgumentException("数据表名不能包含空格", nameof(dictionary));
+            }
+        
+            // 检查是否包含全角空格
+            if (tableName.Contains('\u3000'))
+            {
+                throw new ArgumentException("数据表名不能包含全角空格", nameof(dictionary));
+            }
+        
+            // 检查是否符合命名规范：以中文、字母或下划线开头，只能包含中文、字母、数字、下划线
+            if (!Regex.IsMatch(tableName, @"^[\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_]*$"))
+            {
+                throw new ArgumentException("数据表名必须以中文、字母或下划线开头，只能包含中文、字母、数字和下划线", nameof(dictionary));
+            }
         }
     }
 
