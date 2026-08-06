@@ -1,6 +1,5 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Media;
-using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using ExcelToSQLite.Models;
 using ExcelToSQLite.Services;
@@ -67,6 +66,8 @@ namespace ExcelToSQLite.ViewModels
         private decimal _totalAmount = 0;
         private decimal _totalFuelVolume = 0;
         private string _totalAmountDisplay = "0.00";
+        private int _fuelRecordCount = 0;
+        private int _depositRecordCount = 0;
         
         // 批次
         private ObservableCollection<AnalysisBatch> _batches = new();
@@ -82,7 +83,6 @@ namespace ExcelToSQLite.ViewModels
         // 解析后的记录
         private List<FuelCardRecord> _allRecords = new();
         
-        // 声明为可空类型以消除 CS8618 警告
         public ReactiveCommand<Unit, Unit>? DownloadTemplateCommand { get; private set; }
 
         public FuelCardViewModel()
@@ -178,23 +178,18 @@ namespace ExcelToSQLite.ViewModels
             
             try
             {
-                // 获取模板文件的完整路径
                 string templateFileName = "Resources/Templates/中国石化加油IC卡台帐对帐单.xlsx";
                 string templatePath = Path.Combine(AppContext.BaseDirectory, templateFileName);
                 
-                // 检查文件是否存在
                 if (!File.Exists(templatePath))
                 {
-                    // 如果输出目录不存在，尝试从项目源目录复制
                     string sourcePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Resources", "Templates", "中国石化加油IC卡台帐对帐单.xlsx");
                     if (File.Exists(sourcePath))
                     {
-                        // 确保目标目录存在
                         string? targetDir = Path.GetDirectoryName(templatePath);
                         if (!string.IsNullOrEmpty(targetDir) && !Directory.Exists(targetDir))
                             Directory.CreateDirectory(targetDir);
                         
-                        // 复制文件到输出目录
                         File.Copy(sourcePath, templatePath, true);
                     }
                     else
@@ -204,7 +199,6 @@ namespace ExcelToSQLite.ViewModels
                     }
                 }
                 
-                // 让用户选择保存位置
                 var window = GetWindow();
                 if (window == null)
                 {
@@ -219,7 +213,6 @@ namespace ExcelToSQLite.ViewModels
                     return;
                 }
                 
-                // 设置保存选项
                 var options = new Avalonia.Platform.Storage.FilePickerSaveOptions
                 {
                     Title = "保存加油卡样表模板",
@@ -231,15 +224,12 @@ namespace ExcelToSQLite.ViewModels
                     DefaultExtension = ".xlsx"
                 };
                 
-                // 打开保存对话框
                 var file = await storageProvider.SaveFilePickerAsync(options);
                 if (file == null)
                 {
-                    // 用户取消了保存
                     return;
                 }
                 
-                // 获取保存路径
                 var savePath = file.Path?.LocalPath ?? file.Name;
                 if (string.IsNullOrEmpty(savePath))
                 {
@@ -247,21 +237,17 @@ namespace ExcelToSQLite.ViewModels
                     return;
                 }
                 
-                // 确保目标目录存在
                 string? saveDir = Path.GetDirectoryName(savePath);
                 if (!string.IsNullOrEmpty(saveDir) && !Directory.Exists(saveDir))
                     Directory.CreateDirectory(saveDir);
                 
-                // 复制模板到目标位置
                 File.Copy(templatePath, savePath, true);
                 
                 SetStatus($"✅ 模板已保存到: {Path.GetFileName(savePath)}", new SolidColorBrush(Colors.Green));
                 
-                // 询问是否打开所在文件夹
                 var openFolder = await ShowConfirmDialogAsync($"模板已保存成功！\n\n是否打开文件所在文件夹？", "保存成功");
                 if (openFolder)
                 {
-                    // 打开文件夹
                     System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{savePath}\"");
                 }
             }
@@ -419,6 +405,18 @@ namespace ExcelToSQLite.ViewModels
             set => this.RaiseAndSetIfChanged(ref _totalAmountDisplay, value);
         }
 
+        public int FuelRecordCount
+        {
+            get => _fuelRecordCount;
+            set => this.RaiseAndSetIfChanged(ref _fuelRecordCount, value);
+        }
+
+        public int DepositRecordCount
+        {
+            get => _depositRecordCount;
+            set => this.RaiseAndSetIfChanged(ref _depositRecordCount, value);
+        }
+
         // 批次
         public ObservableCollection<AnalysisBatch> Batches
         {
@@ -528,7 +526,6 @@ namespace ExcelToSQLite.ViewModels
                 _cts = new CancellationTokenSource();
                 var token = _cts.Token;
 
-                // 并行加载批次和数据字典
                 var loadBatchesTask = LoadBatchesAsync();
                 var loadDictionariesTask = LoadDictionariesAsync();
 
@@ -789,10 +786,10 @@ namespace ExcelToSQLite.ViewModels
                     try
                     {
                         var records = await _parserService.ParseFuelCardAsync(filePath);
-                        var fuelRecords = records.Where(r => r.IsFuelRecord).ToList();
+                        var validRecords = records.Where(r => r.IsValidRecord).ToList();
                         
-                        allRecords.AddRange(fuelRecords);
-                        fileResults.Add($"✅ {fileName}: {fuelRecords.Count} 条记录");
+                        allRecords.AddRange(validRecords);
+                        fileResults.Add($"✅ {fileName}: {validRecords.Count} 条记录");
                     }
                     catch (Exception ex)
                     {
@@ -809,6 +806,10 @@ namespace ExcelToSQLite.ViewModels
                 TotalAmount = allRecords.Sum(r => r.Amount);
                 TotalFuelVolume = allRecords.Sum(r => r.Quantity);
                 TotalAmountDisplay = TotalAmount.ToString("N2");
+                
+                // 统计圈存和加油记录数量
+                FuelRecordCount = allRecords.Count(r => r.BusinessType == "加油");
+                DepositRecordCount = allRecords.Count(r => r.BusinessType == "圈存");
 
                 await ThreadingHelper.RunOnUIThreadAsync(() =>
                 {
@@ -820,7 +821,9 @@ namespace ExcelToSQLite.ViewModels
                     IsLoading = false;
                     LoadingMessage = string.Empty;
                     
-                    var summary = $"✅ 解析完成！共 {allRecords.Count} 条记录，{CardCount} 张卡，总金额 {TotalAmount:N2} 元";
+                    var summary = $"✅ 解析完成！共 {allRecords.Count} 条记录，" +
+                                  $"其中加油 {FuelRecordCount} 条，圈存 {DepositRecordCount} 条，" +
+                                  $"{CardCount} 张卡，总金额 {TotalAmount:N2} 元";
                     SetStatus(summary, new SolidColorBrush(Colors.Green));
                     
                     // 如果有错误，显示警告
@@ -959,186 +962,235 @@ namespace ExcelToSQLite.ViewModels
         #endregion
 
         #region 导入
-
+        
         private async Task ImportAsync()
+{
+    if (_disposed || _isCleaned) return;
+    if (IsLoading) return;
+    if (_databaseService == null) return;
+
+    try
+    {
+        if (string.IsNullOrEmpty(FilePath))
         {
-            if (_disposed || _isCleaned) return;
-            if (IsLoading) return;
-            if (_databaseService == null) return;
+            await ShowWarningMessageAsync("请先选择Excel文件", "提示");
+            return;
+        }
 
-            try
+        if (SelectedBatch == null)
+        {
+            await ShowWarningMessageAsync("请先选择分析批次", "提示");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(TableName))
+        {
+            await ShowWarningMessageAsync("请输入表名或点击'自动生成'", "提示");
+            return;
+        }
+
+        if (TableName.IndexOfAny(new[] { ' ', '-', '/', '\\', ':', '*', '?', '"', '<', '>', '|', '\'', ';' }) >= 0)
+        {
+            await ShowWarningMessageAsync("表名包含非法字符，请使用字母、数字和下划线", "提示");
+            return;
+        }
+
+        if (!char.IsLetter(TableName[0]))
+        {
+            await ShowWarningMessageAsync("表名应以字母开头", "提示");
+            return;
+        }
+
+        if (_allRecords.Count == 0)
+        {
+            await ShowWarningMessageAsync("没有可导入的数据", "提示");
+            return;
+        }
+
+        // 创建 FuelCardTableService 实例
+        var fuelCardTableService = new FuelCardTableService();
+
+        // 检查表是否存在并获取实际表名
+        var tableExists = await fuelCardTableService.TableExistsAsync(TableName);
+        string actualTableName = TableName;
+
+        // 如果表已存在，检查结构
+        if (tableExists)
+        {
+            // 验证表结构
+            var isValid = await fuelCardTableService.ValidateTableStructureAsync(TableName);
+            if (!isValid)
             {
-                if (string.IsNullOrEmpty(FilePath))
-                {
-                    await ShowWarningMessageAsync("请先选择Excel文件", "提示");
-                    return;
-                }
-
-                if (SelectedBatch == null)
-                {
-                    await ShowWarningMessageAsync("请先选择分析批次", "提示");
-                    return;
-                }
-
-                if (string.IsNullOrEmpty(TableName))
-                {
-                    await ShowWarningMessageAsync("请输入表名或点击'自动生成'", "提示");
-                    return;
-                }
-
-                if (TableName.IndexOfAny(new[] { ' ', '-', '/', '\\', ':', '*', '?', '"', '<', '>', '|', '\'', ';' }) >= 0)
-                {
-                    await ShowWarningMessageAsync("表名包含非法字符，请使用字母、数字和下划线", "提示");
-                    return;
-                }
-
-                if (!char.IsLetter(TableName[0]))
-                {
-                    await ShowWarningMessageAsync("表名应以字母开头", "提示");
-                    return;
-                }
-
-                if (_allRecords.Count == 0)
-                {
-                    await ShowWarningMessageAsync("没有可导入的数据", "提示");
-                    return;
-                }
-
-                // 检查表是否存在
-                var tableExists = await _databaseService.TableExistsAsync(TableName);
+                // 表结构不匹配，自动生成新表名
+                var newTableName = await fuelCardTableService.GenerateAvailableTableNameAsync(TableName);
                 
-                string confirmMessage = $"📊 确认导入加油卡记录\n\n" +
-                                       $"📁 文件数: {FileCount}\n" +
-                                       $"📋 批次: {SelectedBatch.Name}\n" +
-                                       $"📝 表名: {TableName}\n" +
-                                       $"{(tableExists ? "📌 数据将追加到现有表" : "📌 将创建新表")}\n" +
-                                       $"📊 记录数: {TotalRecords}\n" +
-                                       $"💳 卡数: {CardCount}\n" +
-                                       $"💰 总金额: {TotalAmount:N2}元\n" +
-                                       $"⛽ 总升数: {TotalFuelVolume:F2}L";
-
-                if (UseDictionary && SelectedDictionary != null)
-                {
-                    confirmMessage += $"\n📚 数据字典: {SelectedDictionary.Name}";
-                }
-
-                confirmMessage += $"\n\n确认继续导入？";
-
-                var confirm = await ShowConfirmDialogAsync(confirmMessage, "确认导入");
-                if (!confirm) return;
-
+                // 提示用户表名已变更
+                var confirmUseNewName = await ShowConfirmDialogAsync(
+                    $"⚠️ 表 '{TableName}' 已存在但结构不匹配。\n\n" +
+                    $"将使用新表名: '{newTableName}'\n\n" +
+                    $"是否继续导入？",
+                    "表名已变更"
+                );
+                
+                if (!confirmUseNewName) return;
+                
+                actualTableName = newTableName;
+                tableExists = false; // 新表不存在
+                
+                // 更新界面上的表名
                 await ThreadingHelper.RunOnUIThreadAsync(() =>
                 {
-                    if (_disposed || _isCleaned) return;
-                    IsLoading = true;
-                    LoadingMessage = "正在准备导入...";
-                    SetStatus("正在导入数据...", new SolidColorBrush(Colors.Orange));
-                });
-
-                // 创建表
-                var columns = new List<string>
-                {
-                    "CardNumber",
-                    "TransactionTime",
-                    "BusinessType",
-                    "FuelType",
-                    "Quantity",
-                    "UnitPrice",
-                    "Amount",
-                    "BonusPoints",
-                    "DiscountPrice",
-                    "Balance",
-                    "Location",
-                    "Operator",
-                    "Remarks",
-                    "CustomerName",
-                    "NetworkName"
-                };
-
-                await _databaseService.CreateFuelCardTableAsync(TableName, columns);
-
-                // 分批插入数据
-                int batchSize = 500;
-                int totalBatches = (int)Math.Ceiling((double)_allRecords.Count / batchSize);
-                int importedCount = 0;
-
-                for (int batch = 0; batch < totalBatches; batch++)
-                {
-                    if (_disposed || _isCleaned) break;
-
-                    var batchRecords = _allRecords.Skip(batch * batchSize).Take(batchSize).ToList();
-                    
-                    await ThreadingHelper.RunOnUIThreadAsync(() =>
-                    {
-                        LoadingMessage = $"正在导入数据... ({batch + 1}/{totalBatches})";
-                    });
-
-                    var rows = new List<List<object>>();
-                    foreach (var record in batchRecords)
-                    {
-                        var row = new List<object>
-                        {
-                            record.CardNumber ?? string.Empty,
-                            record.TransactionTime.ToString("yyyy-MM-dd HH:mm:ss"),
-                            record.BusinessType ?? string.Empty,
-                            record.FuelType ?? string.Empty,
-                            record.Quantity.ToString("F2"),
-                            record.UnitPrice.ToString("F2"),
-                            record.Amount.ToString("F2"),
-                            record.BonusPoints.ToString("F2"),
-                            record.DiscountPrice.ToString("F2"),
-                            record.Balance.ToString("F2"),
-                            record.Location ?? string.Empty,
-                            record.Operator ?? string.Empty,
-                            record.Remarks ?? string.Empty,
-                            record.CustomerName ?? string.Empty,
-                            record.NetworkName ?? string.Empty
-                        };
-                        rows.Add(row);
-                    }
-
-                    await _databaseService.InsertDataAsync(TableName, columns, rows);
-                    importedCount += batchRecords.Count;
-                }
-
-                await ThreadingHelper.RunOnUIThreadAsync(async () =>
-                {
-                    if (_disposed || _isCleaned) return;
-
-                    var message = $"✅ 导入成功!\n\n" +
-                                 $"📁 文件数: {FileCount}\n" +
-                                 $"📝 表名: {TableName}\n" +
-                                 $"📋 批次: {SelectedBatch?.Name}\n" +
-                                 $"📊 记录数: {importedCount}\n" +
-                                 $"💳 卡数: {CardCount}\n" +
-                                 $"💰 总金额: {TotalAmount:N2}元\n" +
-                                 $"⛽ 总升数: {TotalFuelVolume:F2}L\n" +
-                                 $"{(tableExists ? "📌 数据已追加到现有表" : "📌 已创建新表")}\n" +
-                                 $"🕐 导入时间: {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
-
-                    ShowImportStats = true;
-                    ImportStatsText = message;
-
-                    await ShowSuccessMessageAsync(message, "导入成功");
-
-                    SetStatus($"✅ 导入成功: {importedCount} 条加油记录{(tableExists ? " (追加)" : "")}", new SolidColorBrush(Colors.Green));
-                    IsLoading = false;
-                    LoadingMessage = string.Empty;
-                });
-            }
-            catch (Exception ex)
-            {
-                await ThreadingHelper.RunOnUIThreadAsync(async () =>
-                {
-                    if (_disposed || _isCleaned) return;
-                    await ShowErrorMessageAsync($"导入失败: {ex.Message}", "导入失败");
-                    SetStatus($"❌ 导入失败: {ex.Message}", new SolidColorBrush(Colors.Red));
-                    IsLoading = false;
-                    LoadingMessage = string.Empty;
+                    TableName = actualTableName;
+                    TableNameValidation = $"✅ 已自动生成新表名: {actualTableName}";
+                    ValidationColor = new SolidColorBrush(Colors.Green);
                 });
             }
         }
+        
+        // 构建确认消息
+        string confirmMessage = $"📊 确认导入加油卡记录\n\n" +
+                               $"📁 文件数: {FileCount}\n" +
+                               $"📋 批次: {SelectedBatch.Name}\n" +
+                               $"📝 表名: {actualTableName}\n" +
+                               $"{(tableExists ? "📌 数据将追加到现有表" : "📌 将创建新表")}\n" +
+                               $"📊 总记录数: {TotalRecords}\n" +
+                               $"⛽ 加油记录: {FuelRecordCount}\n" +
+                               $"💰 圈存记录: {DepositRecordCount}\n" +
+                               $"💳 卡数: {CardCount}\n" +
+                               $"💰 总金额: {TotalAmount:N2}元\n" +
+                               $"⛽ 总升数: {TotalFuelVolume:F2}L";
 
+        if (UseDictionary && SelectedDictionary != null)
+        {
+            confirmMessage += $"\n📚 数据字典: {SelectedDictionary.Name}";
+        }
+
+        confirmMessage += $"\n\n确认继续导入？";
+
+        var confirm = await ShowConfirmDialogAsync(confirmMessage, "确认导入");
+        if (!confirm) return;
+
+        await ThreadingHelper.RunOnUIThreadAsync(() =>
+        {
+            if (_disposed || _isCleaned) return;
+            IsLoading = true;
+            LoadingMessage = "正在准备导入...";
+            SetStatus("正在导入数据...", new SolidColorBrush(Colors.Orange));
+        });
+
+        try
+        {
+            // 创建表（使用中文列名）- 如果表已存在且结构正确，不会重复创建
+            var columns = new List<string>
+            {
+                "卡号",
+                "交易时间",
+                "业务类型",
+                "油品类型",
+                "数量",
+                "单价",
+                "金额",
+                "奖励分值",
+                "优惠价",
+                "余额",
+                "地点",
+                "操作员",
+                "备注",
+                "客户名称",
+                "网点名称"
+            };
+
+            // 使用 FuelCardTableService 创建表（会自动处理表名冲突）
+            var finalTableName = await fuelCardTableService.CreateTableAsync(actualTableName, columns);
+            
+            // 如果最终表名与预期不同，更新记录
+            if (finalTableName != actualTableName)
+            {
+                await ThreadingHelper.RunOnUIThreadAsync(() =>
+                {
+                    TableName = finalTableName;
+                    TableNameValidation = $"✅ 已自动生成新表名: {finalTableName}";
+                    ValidationColor = new SolidColorBrush(Colors.Green);
+                });
+                actualTableName = finalTableName;
+            }
+
+            // 分批插入数据
+            int batchSize = 500;
+            int totalBatches = (int)Math.Ceiling((double)_allRecords.Count / batchSize);
+            int importedCount = 0;
+
+            for (int batch = 0; batch < totalBatches; batch++)
+            {
+                if (_disposed || _isCleaned) break;
+
+                var batchRecords = _allRecords.Skip(batch * batchSize).Take(batchSize).ToList();
+                
+                await ThreadingHelper.RunOnUIThreadAsync(() =>
+                {
+                    LoadingMessage = $"正在导入数据... ({batch + 1}/{totalBatches})";
+                });
+
+                // 使用 FuelCardTableService 插入数据
+                var inserted = await fuelCardTableService.InsertRecordsAsync(actualTableName, batchRecords);
+                importedCount += inserted;
+            }
+
+            await ThreadingHelper.RunOnUIThreadAsync(async () =>
+            {
+                if (_disposed || _isCleaned) return;
+
+                // 获取导入后的统计信息
+                var stats = await fuelCardTableService.GetStatisticsAsync(actualTableName);
+
+                var message = $"✅ 导入成功!\n\n" +
+                             $"📁 文件数: {FileCount}\n" +
+                             $"📝 表名: {actualTableName}\n" +
+                             $"📋 批次: {SelectedBatch?.Name}\n" +
+                             $"📊 总记录数: {importedCount}\n" +
+                             $"⛽ 加油记录: {FuelRecordCount}\n" +
+                             $"💰 圈存记录: {DepositRecordCount}\n" +
+                             $"💳 卡数: {stats.CardCount}\n" +
+                             $"💰 总金额: {stats.TotalAmount:N2}元\n" +
+                             $"⛽ 总升数: {stats.TotalFuelVolume:F2}L\n" +
+                             $"{(tableExists ? "📌 数据已追加到现有表" : "📌 已创建新表")}\n" +
+                             $"🕐 导入时间: {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
+
+                ShowImportStats = true;
+                ImportStatsText = message;
+
+                await ShowSuccessMessageAsync(message, "导入成功");
+
+                SetStatus($"✅ 导入成功: {importedCount} 条记录 (加油:{FuelRecordCount}, 圈存:{DepositRecordCount}){(tableExists ? " (追加)" : "")}", new SolidColorBrush(Colors.Green));
+                IsLoading = false;
+                LoadingMessage = string.Empty;
+            });
+        }
+        catch (Exception ex)
+        {
+            await ThreadingHelper.RunOnUIThreadAsync(async () =>
+            {
+                if (_disposed || _isCleaned) return;
+                await ShowErrorMessageAsync($"导入失败: {ex.Message}", "导入失败");
+                SetStatus($"❌ 导入失败: {ex.Message}", new SolidColorBrush(Colors.Red));
+                IsLoading = false;
+                LoadingMessage = string.Empty;
+            });
+        }
+    }
+    catch (Exception ex)
+    {
+        await ThreadingHelper.RunOnUIThreadAsync(async () =>
+        {
+            if (_disposed || _isCleaned) return;
+            await ShowErrorMessageAsync($"导入失败: {ex.Message}", "导入失败");
+            SetStatus($"❌ 导入失败: {ex.Message}", new SolidColorBrush(Colors.Red));
+            IsLoading = false;
+            LoadingMessage = string.Empty;
+        });
+    }
+}
+        
         #endregion
 
         #region 辅助方法
@@ -1166,6 +1218,8 @@ namespace ExcelToSQLite.ViewModels
                 TotalAmount = 0;
                 TotalFuelVolume = 0;
                 TotalAmountDisplay = "0.00";
+                FuelRecordCount = 0;
+                DepositRecordCount = 0;
                 _allRecords.Clear();
                 ShowImportStats = false;
                 ImportStatsText = string.Empty;
@@ -1213,7 +1267,7 @@ namespace ExcelToSQLite.ViewModels
 
         #endregion
 
-        #region 对话框（使用统一的 MessageBox）
+        #region 对话框
 
         private Window? GetWindow()
         {
@@ -1226,9 +1280,6 @@ namespace ExcelToSQLite.ViewModels
             return null;
         }
 
-        /// <summary>
-        /// 显示普通消息框
-        /// </summary>
         private async Task ShowMessageBoxAsync(string message, string title = "提示", MessageBoxIcon icon = MessageBoxIcon.None)
         {
             if (_disposed || _isCleaned) return;
@@ -1244,9 +1295,6 @@ namespace ExcelToSQLite.ViewModels
             }
         }
 
-        /// <summary>
-        /// 显示确认对话框
-        /// </summary>
         private async Task<bool> ShowConfirmDialogAsync(string message, string title = "确认操作")
         {
             if (_disposed || _isCleaned) return false;
@@ -1266,36 +1314,19 @@ namespace ExcelToSQLite.ViewModels
             return result == MessageBoxResult.Yes;
         }
 
-        /// <summary>
-        /// 显示成功消息
-        /// </summary>
         private async Task ShowSuccessMessageAsync(string message, string title = "成功")
         {
             await ShowMessageBoxAsync(message, title, MessageBoxIcon.Success);
         }
 
-        /// <summary>
-        /// 显示错误消息
-        /// </summary>
         private async Task ShowErrorMessageAsync(string message, string title = "错误")
         {
             await ShowMessageBoxAsync(message, title, MessageBoxIcon.Error);
         }
 
-        /// <summary>
-        /// 显示警告消息
-        /// </summary>
         private async Task ShowWarningMessageAsync(string message, string title = "警告")
         {
             await ShowMessageBoxAsync(message, title, MessageBoxIcon.Warning);
-        }
-
-        /// <summary>
-        /// 显示信息消息
-        /// </summary>
-        private async Task ShowInfoMessageAsync(string message, string title = "提示")
-        {
-            await ShowMessageBoxAsync(message, title, MessageBoxIcon.Information);
         }
 
         #endregion
@@ -1346,6 +1377,8 @@ namespace ExcelToSQLite.ViewModels
                             TotalAmount = 0;
                             TotalFuelVolume = 0;
                             TotalAmountDisplay = "0.00";
+                            FuelRecordCount = 0;
+                            DepositRecordCount = 0;
                         }
                         catch { }
                     });

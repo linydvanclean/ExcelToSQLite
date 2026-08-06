@@ -9,7 +9,7 @@ namespace ExcelToSQLite.Models
         public string? EmployeeName { get; set; }
         public string? Department { get; set; }
         public DateTime CheckTime { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         public int DayOfMonth { get; set; }
         
         // 辅助属性

@@ -369,14 +369,31 @@ public class IndicatorEditViewModel : ReactiveObject, IDisposable
     {
         try
         {
-            var sql = SelectedTabIndex == 0 ? IndicatorSqlStatement : IndicatorSqlDetailData;
-            var sqlLabel = SelectedTabIndex == 0 ? "统计SQL" : "详细SQL";
+            string sql;
+            string sqlLabel;
+        
+            // 根据标签页索引选择对应的SQL
+            if (SelectedTabIndex == 1) // 统计SQL标签页
+            {
+                sql = IndicatorSqlStatement;
+                sqlLabel = "统计SQL";
+            }
+            else if (SelectedTabIndex == 2) // 详细SQL标签页
+            {
+                sql = IndicatorSqlDetailData;
+                sqlLabel = "详细SQL";
+            }
+            else // 第一个标签页 - 理论上不应该发生，因为CanPreview限制了
+            {
+                sql = IndicatorSqlStatement;
+                sqlLabel = "统计SQL";
+            }
 
             if (string.IsNullOrWhiteSpace(sql))
             {
+                await MessageBox.ShowAsync($"{sqlLabel} 内容为空，无法预览！", icon: MessageBoxIcon.Warning);
                 return;
             }
-
 
             var previewViewModel = new DetailDataViewModel(sql, $"{IndicatorName}_{sqlLabel}", IndicatorCategory);
             var detailView = new DetailDataView
@@ -411,8 +428,9 @@ public class IndicatorEditViewModel : ReactiveObject, IDisposable
                 }
             });
         }
-        catch
+        catch (Exception ex)
         {
+            await MessageBox.ShowAsync($"预览失败：{ex.Message}", icon: MessageBoxIcon.Error);
         }
     }
 
