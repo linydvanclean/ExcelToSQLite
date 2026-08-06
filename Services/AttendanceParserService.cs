@@ -785,6 +785,7 @@ namespace ExcelToSQLite.Services
             return records;
         }
 
+
         /// <summary>
         /// 解析样表3
         /// </summary>
@@ -798,9 +799,13 @@ namespace ExcelToSQLite.Services
 
                 // 解析月份（从标题获取）
                 DateTime monthYear = DateTime.Now;
+                int detectedYear = DateTime.Now.Year;
+                int detectedMonth = DateTime.Now.Month;
+                
                 for (int i = 0; i < Math.Min(3, rows.Count); i++)
                 {
                     var rowText = rows[i].InnerText;
+                    // 支持多种日期格式
                     var match = Regex.Match(rowText, @"(\d{4})年(\d{1,2})月");
                     if (match.Success)
                     {
@@ -808,6 +813,22 @@ namespace ExcelToSQLite.Services
                             int.TryParse(match.Groups[2].Value, out int month))
                         {
                             monthYear = new DateTime(year, month, 1);
+                            detectedYear = year;
+                            detectedMonth = month;
+                            break;
+                        }
+                    }
+                    
+                    // 尝试其他日期格式
+                    match = Regex.Match(rowText, @"(\d{4})[/-](\d{1,2})[/-]\d{1,2}");
+                    if (match.Success)
+                    {
+                        if (int.TryParse(match.Groups[1].Value, out int year) &&
+                            int.TryParse(match.Groups[2].Value, out int month))
+                        {
+                            monthYear = new DateTime(year, month, 1);
+                            detectedYear = year;
+                            detectedMonth = month;
                             break;
                         }
                     }
@@ -830,26 +851,75 @@ namespace ExcelToSQLite.Services
                 var headerCells = rows[headerRowIndex].SelectNodes(".//td");
                 if (headerCells == null) return records;
 
-                // 获取日期列映射（从表头获取日期）
+                // 动态获取日期列映射（支持任意月份）
                 var dateColumnMap = new Dictionary<int, int>(); // columnIndex -> day
-                var datePatterns = new List<string> { 
-                    "07-01", "07-02", "07-03", "07-06", "07-07", "07-08", "07-09", "07-10", 
-                    "07-13", "07-14", "07-15", "07-16", "07-17", "07-20", "07-21", "07-22", 
-                    "07-23", "07-24", "07-27", "07-28", "07-29", "07-30", "07-31" 
-                };
                 
                 for (int col = 0; col < headerCells.Count; col++)
                 {
                     var text = headerCells[col].InnerText.Trim();
-                    foreach (var pattern in datePatterns)
+                    
+                    // 方法1：匹配 MM-dd 格式（如 08-01, 8-1）
+                    var match1 = Regex.Match(text, @"(\d{1,2})-(\d{1,2})");
+                    if (match1.Success)
                     {
-                        if (text.Contains(pattern))
+                        if (int.TryParse(match1.Groups[1].Value, out int month) &&
+                            int.TryParse(match1.Groups[2].Value, out int dayValue1) &&
+                            month == detectedMonth && dayValue1 >= 1 && dayValue1 <= 31)
                         {
-                            var dayMatch = Regex.Match(pattern, @"(\d{2})$");
-                            if (dayMatch.Success && int.TryParse(dayMatch.Groups[1].Value, out int day))
+                            dateColumnMap[col] = dayValue1;
+                            continue;
+                        }
+                    }
+                    
+                    // 方法2：匹配 MM/DD 格式（如 08/01）
+                    var match2 = Regex.Match(text, @"(\d{1,2})/(\d{1,2})");
+                    if (match2.Success)
+                    {
+                        if (int.TryParse(match2.Groups[1].Value, out int month) &&
+                            int.TryParse(match2.Groups[2].Value, out int dayValue2) &&
+                            month == detectedMonth && dayValue2 >= 1 && dayValue2 <= 31)
+                        {
+                            dateColumnMap[col] = dayValue2;
+                            continue;
+                        }
+                    }
+                    
+                    // 方法3：匹配预设的日期模式（如 "8月1日", "8月01日"）
+                    var match3 = Regex.Match(text, $@"{detectedMonth}月(\d{{1,2}})日");
+                    if (match3.Success)
+                    {
+                        if (int.TryParse(match3.Groups[1].Value, out int dayValue3) && dayValue3 >= 1 && dayValue3 <= 31)
+                        {
+                            dateColumnMap[col] = dayValue3;
+                            continue;
+                        }
+                    }
+                    
+                    // 方法4：直接匹配日期数字（仅在明确是日期列的情况下）
+                    if (int.TryParse(text, out int dayValue4) && dayValue4 >= 1 && dayValue4 <= 31)
+                    {
+                        // 检查是否是日期列（通过上下文判断）
+                        dateColumnMap[col] = dayValue4;
+                    }
+                }
+
+                // 如果还没找到日期列，尝试使用动态生成的模式列表
+                if (dateColumnMap.Count == 0)
+                {
+                    var datePatterns = GenerateDatePatternsForMonth(detectedYear, detectedMonth);
+                    for (int col = 0; col < headerCells.Count; col++)
+                    {
+                        var text = headerCells[col].InnerText.Trim();
+                        foreach (var pattern in datePatterns)
+                        {
+                            if (text.Contains(pattern))
                             {
-                                dateColumnMap[col] = day;
-                                break;
+                                var dayMatch = Regex.Match(pattern, @"(\d{2})$");
+                                if (dayMatch.Success && int.TryParse(dayMatch.Groups[1].Value, out int dayValue5))
+                                {
+                                    dateColumnMap[col] = dayValue5;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -946,7 +1016,7 @@ namespace ExcelToSQLite.Services
                     foreach (var kvp in dateColumnMap)
                     {
                         int colIndex = kvp.Key;
-                        int day = kvp.Value;
+                        int dayValue = kvp.Value;
 
                         if (!mergedCellValues.ContainsKey(colIndex)) continue;
 
@@ -962,7 +1032,7 @@ namespace ExcelToSQLite.Services
                                 {
                                     records.Add(CreateRecord(
                                         employeeId, name, department,
-                                        monthYear, day, time.Value
+                                        monthYear, dayValue, time.Value
                                     ));
                                 }
                             }
@@ -978,6 +1048,33 @@ namespace ExcelToSQLite.Services
             }
 
             return records;
+        }
+
+        /// <summary>
+        /// 动态生成指定月份的日期模式列表
+        /// </summary>
+        private List<string> GenerateDatePatternsForMonth(int year, int month)
+        {
+            var patterns = new List<string>();
+            int daysInMonth = DateTime.DaysInMonth(year, month);
+            
+            // 生成各种格式的日期模式
+            for (int day = 1; day <= daysInMonth; day++)
+            {
+                // MM-dd 格式
+                patterns.Add($"{month:00}-{day:00}");
+                // M-d 格式（无前导零）
+                patterns.Add($"{month}-{day}");
+                // MM/dd 格式
+                patterns.Add($"{month:00}/{day:00}");
+                // M/d 格式（无前导零）
+                patterns.Add($"{month}/{day}");
+                // 月日 格式（中文）
+                patterns.Add($"{month}月{day}日");
+                patterns.Add($"{month}月{day:00}日");
+            }
+            
+            return patterns;
         }
 
         /// <summary>
@@ -1025,15 +1122,20 @@ namespace ExcelToSQLite.Services
                 var headerCells = rows[headerRowIndex].SelectNodes(".//td");
                 if (headerCells == null || headerCells.Count < 3) return records;
 
-                // 获取日期列映射（从表头提取日期，如"7-1 周三"）
+                // 获取日期列映射（从表头提取日期，如"7-1 周三"、"8-1 周三"）
                 var dateColumnMap = new Dictionary<int, int>(); // columnIndex -> day
                 for (int col = 0; col < headerCells.Count; col++)
                 {
                     var text = headerCells[col].InnerText.Trim();
+                    // 匹配任意月份的 MM-dd 格式
                     var match = Regex.Match(text, @"(\d{1,2})-(\d{1,2})");
-                    if (match.Success && int.TryParse(match.Groups[2].Value, out int day))
+                    if (match.Success)
                     {
-                        dateColumnMap[col] = day;
+                        // 注意：这里不限制月份，因为样表4的日期可能跨月
+                        if (int.TryParse(match.Groups[2].Value, out int dayNumber) && dayNumber >= 1 && dayNumber <= 31)
+                        {
+                            dateColumnMap[col] = dayNumber;
+                        }
                     }
                 }
 
@@ -1078,7 +1180,7 @@ namespace ExcelToSQLite.Services
                     foreach (var kvp in dateColumnMap)
                     {
                         int colIndex = kvp.Key;
-                        int day = kvp.Value;
+                        int dayNumber = kvp.Value;
 
                         if (colIndex >= cells.Count) continue;
 
@@ -1092,7 +1194,7 @@ namespace ExcelToSQLite.Services
                             {
                                 records.Add(CreateRecord(
                                     employeeId, employeeName, department,
-                                    monthYear, day, time.Value
+                                    monthYear, dayNumber, time.Value
                                 ));
                             }
                         }
