@@ -227,14 +227,14 @@ namespace ExcelToSQLite.Services
                 return string.Empty;
             }
         }
-
+        
         /// <summary>
-        /// 解析 HTML 格式的考勤数据 - 自动识别样表类型
+        /// 解析 HTML 格式的考勤数据 - 自动识别样表类型（更新版）
         /// </summary>
         private List<AttendanceRecord> ParseHtmlAttendance(string htmlContent)
         {
             var records = new List<AttendanceRecord>();
-            
+    
             try
             {
                 var doc = new HtmlDocument();
@@ -254,7 +254,7 @@ namespace ExcelToSQLite.Services
 
                 // 检测样表类型
                 var tableType = DetectTableType(rows, doc);
-                
+        
                 switch (tableType)
                 {
                     case TableType.OldStyleKeyValue:
@@ -272,6 +272,9 @@ namespace ExcelToSQLite.Services
                     case TableType.AttendanceRecordV2:
                         records = ParseAttendanceRecordV2Style(rows);
                         break;
+                    case TableType.AttendanceDetail:
+                        records = ParseAttendanceDetailStyle(rows);
+                        break;
                     default:
                         records = ParseOldStyleAttendance(rows, doc);
                         break;
@@ -286,7 +289,7 @@ namespace ExcelToSQLite.Services
         }
 
         /// <summary>
-        /// 检测表格类型
+        /// 检测表格类型（更新版）
         /// </summary>
         private TableType DetectTableType(HtmlNodeCollection rows, HtmlDocument doc)
         {
@@ -297,47 +300,52 @@ namespace ExcelToSQLite.Services
                 headerText.Append(rows[i].InnerText);
             }
             var fullText = headerText.ToString();
-
+        
+            // 检测样表5：考勤明细表（包含"对应时段"、"上班时间"、"签到时间"）
+            if (fullText.Contains("对应时段") && fullText.Contains("上班时间") && 
+                fullText.Contains("签到时间") && fullText.Contains("签退时间"))
+            {
+                return TableType.AttendanceDetail;
+            }
+        
             // 检测旧样式（键值对格式）
             if (fullText.Contains("工号：") && fullText.Contains("姓名：") && fullText.Contains("部门："))
             {
                 return TableType.OldStyleKeyValue;
             }
-
+        
             // 检测样表1：刷卡记录表
             if (fullText.Contains("刷卡记录表") && fullText.Contains("考勤日期"))
             {
                 return TableType.SwipeRecord;
             }
-
+        
             // 检测样表2：考勤记录表（表头有日期和星期）
             if (fullText.Contains("考勤记录表") && fullText.Contains("建表时间"))
             {
                 return TableType.AttendanceRecord;
             }
-
+        
             // 检测样表4：考勤记录表(20260701-20260731)
             if (fullText.Contains("考勤记录表("))
             {
                 return TableType.AttendanceRecordV2;
             }
-
+        
             // 检测样表3：月度汇总表
             if (fullText.Contains("月度汇总表") || fullText.Contains("应出勤天数"))
             {
                 return TableType.MonthlySummary;
             }
-
+        
             // 检测数据行首列是否有工号（数字）- 用于样表1和样表2
             if (rows.Count > 5)
             {
-                // 查找包含工号、姓名、部门的行
                 for (int i = 0; i < Math.Min(10, rows.Count); i++)
                 {
                     var rowText = rows[i].InnerText;
                     if (rowText.Contains("工号") && rowText.Contains("姓名") && rowText.Contains("部门"))
                     {
-                        // 检查下一行是否包含星期几
                         if (i + 1 < rows.Count)
                         {
                             var nextRowText = rows[i + 1].InnerText;
@@ -353,7 +361,7 @@ namespace ExcelToSQLite.Services
                     }
                 }
             }
-
+        
             // 默认返回旧样式
             return TableType.OldStyleKeyValue;
         }
@@ -1332,7 +1340,261 @@ namespace ExcelToSQLite.Services
             SwipeRecord,           // 样表1：刷卡记录表
             AttendanceRecord,      // 样表2：考勤记录表
             MonthlySummary,        // 样表3：月度汇总表
-            AttendanceRecordV2     // 样表4：考勤记录表(20260701-20260731)
+            AttendanceRecordV2,     // 样表4：考勤记录表(20260701-20260731)
+            AttendanceDetail       // 样表5：考勤明细表
         }
+        
+        #region 样表5 支持 龙陵局样表
+        
+        /// <summary>
+        /// 解析样表5：6月县局机关考勤明细
+        /// 只读取签到时间和签退时间作为打卡记录，上班时间和下班时间是规定时间，不作为打卡记录
+        /// </summary>
+        private List<AttendanceRecord> ParseAttendanceDetailStyle(HtmlNodeCollection rows)
+        {
+            var records = new List<AttendanceRecord>();
+        
+            try
+            {
+                if (rows.Count < 5) return records;
+        
+                // 查找表头行（包含"姓名"、"日期"、"对应时段"、"上班时间"等）
+                int headerRowIndex = -1;
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    var rowText = rows[i].InnerText;
+                    if (rowText.Contains("姓名") && rowText.Contains("日期") && 
+                        rowText.Contains("对应时段") && rowText.Contains("签到时间"))
+                    {
+                        headerRowIndex = i;
+                        break;
+                    }
+                }
+        
+                if (headerRowIndex == -1) return records;
+        
+                var headerCells = rows[headerRowIndex].SelectNodes(".//td");
+                if (headerCells == null || headerCells.Count < 5) return records;
+        
+                // 获取各列索引
+                int nameCol = -1, dateCol = -1, periodCol = -1, 
+                    signInCol = -1, signOutCol = -1, deptCol = -1;
+        
+                for (int col = 0; col < headerCells.Count; col++)
+                {
+                    var text = headerCells[col].InnerText.Trim();
+                    if (text == "姓名")
+                        nameCol = col;
+                    else if (text == "日期")
+                        dateCol = col;
+                    else if (text == "对应时段")
+                        periodCol = col;
+                    else if (text == "签到时间")
+                        signInCol = col;
+                    else if (text == "签退时间")
+                        signOutCol = col;
+                    else if (text == "部门")
+                        deptCol = col;
+                }
+        
+                if (nameCol == -1 || dateCol == -1) return records;
+        
+                // 遍历数据行
+                for (int rowIdx = headerRowIndex + 1; rowIdx < rows.Count; rowIdx++)
+                {
+                    var row = rows[rowIdx];
+                    var cells = row.SelectNodes(".//td");
+                    if (cells == null || cells.Count <= Math.Max(nameCol, dateCol)) continue;
+        
+                    var employeeName = cells[nameCol].InnerText.Trim();
+                    var dateText = cells[dateCol].InnerText.Trim();
+                    var period = periodCol >= 0 && periodCol < cells.Count 
+                        ? cells[periodCol].InnerText.Trim() 
+                        : "";
+                    var signInText = signInCol >= 0 && signInCol < cells.Count 
+                        ? cells[signInCol].InnerText.Trim() 
+                        : "";
+                    var signOutText = signOutCol >= 0 && signOutCol < cells.Count 
+                        ? cells[signOutCol].InnerText.Trim() 
+                        : "";
+                    var department = deptCol >= 0 && deptCol < cells.Count 
+                        ? cells[deptCol].InnerText.Trim() 
+                        : "";
+        
+                    // 跳过空行或无效数据
+                    if (string.IsNullOrEmpty(employeeName)) continue;
+        
+                    // 解析日期
+                    DateTime? recordDate = ParseDateFromText(dateText);
+                    if (!recordDate.HasValue) continue;
+        
+                    // 生成工号（使用姓名）
+                    var employeeId = GenerateEmployeeId(employeeName);
+        
+                    // 只记录签到时间（不为空且有效）
+                    if (!string.IsNullOrEmpty(signInText))
+                    {
+                        var signInTime = ParseTimeFromText(signInText);
+                        if (signInTime.HasValue && IsValidCheckTime(signInTime.Value))
+                        {
+                            records.Add(CreateRecord(
+                                employeeId, employeeName, department,
+                                recordDate.Value, signInTime.Value
+                            ));
+                        }
+                    }
+        
+                    // 只记录签退时间（不为空且有效）
+                    if (!string.IsNullOrEmpty(signOutText))
+                    {
+                        var signOutTime = ParseTimeFromText(signOutText);
+                        if (signOutTime.HasValue && IsValidCheckTime(signOutTime.Value))
+                        {
+                            records.Add(CreateRecord(
+                                employeeId, employeeName, department,
+                                recordDate.Value, signOutTime.Value
+                            ));
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"解析考勤明细表失败: {ex.Message}", ex);
+            }
+        
+            return records;
+        }
+        
+        /// <summary>
+        /// 验证打卡时间是否有效（排除明显不合理的时间）
+        /// </summary>
+        private bool IsValidCheckTime(TimeSpan time)
+        {
+            // 合理的时间范围：5:00 - 23:00
+            // 排除 00:00-04:59（通常是无效数据）和 23:00以后（通常是系统错误）
+            if (time >= TimeSpan.FromHours(5) && time < TimeSpan.FromHours(23))
+            {
+                return true;
+            }
+            
+            // 特殊情况：如果是23:30之前，可能算加班，但这里保守处理
+            // 可以调整阈值
+            if (time >= TimeSpan.FromHours(23) && time <= TimeSpan.FromHours(23))
+            {
+                return true;
+            }
+            
+            return false;
+        }
+        
+        /// <summary>
+        /// 从文本中解析日期（支持多种格式）
+        /// </summary>
+        private DateTime? ParseDateFromText(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return null;
+        
+            text = text.Trim();
+            
+            // 支持格式: 2026/6/1, 2026-6-1, 2026年6月1日
+            var formats = new[] { 
+                "yyyy/M/d", "yyyy-M-d", "yyyy年M月d日",
+                "yyyy/MM/dd", "yyyy-MM-dd", "yyyy年MM月dd日"
+            };
+            
+            foreach (var format in formats)
+            {
+                if (DateTime.TryParseExact(text, format, 
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None, 
+                    out var date))
+                {
+                    return date;
+                }
+            }
+        
+            // 尝试通用解析
+            if (DateTime.TryParse(text, out var result))
+            {
+                return result;
+            }
+        
+            return null;
+        }
+        
+        /// <summary>
+        /// 从文本中解析时间
+        /// </summary>
+        private TimeSpan? ParseTimeFromText(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return null;
+        
+            text = text.Trim();
+            
+            // 支持格式: 07:30, 7:30, 07:30:00
+            if (TimeSpan.TryParse(text, out var time))
+            {
+                if (time >= TimeSpan.FromHours(0) && time < TimeSpan.FromHours(24))
+                {
+                    return time;
+                }
+            }
+        
+            // 尝试正则匹配
+            var match = Regex.Match(text, @"(\d{1,2}):(\d{2})(?::(\d{2}))?");
+            if (match.Success)
+            {
+                if (int.TryParse(match.Groups[1].Value, out int hours) &&
+                    int.TryParse(match.Groups[2].Value, out int minutes))
+                {
+                    int seconds = match.Groups[3].Success ? int.Parse(match.Groups[3].Value) : 0;
+                    if (hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60)
+                    {
+                        return new TimeSpan(hours, minutes, seconds);
+                    }
+                }
+            }
+        
+            return null;
+        }
+        
+        /// <summary>
+        /// 根据姓名生成工号
+        /// </summary>
+        private string GenerateEmployeeId(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return string.Empty;
+            
+            // 使用姓名拼音首字母 + 随机数，或者使用固定格式
+            // 这里简单使用 "EMP_" + 姓名
+            return $"EMP_{name}";
+        }
+        
+        /// <summary>
+        /// 创建打卡记录（带日期）
+        /// </summary>
+        private AttendanceRecord CreateRecord(
+            string employeeId,
+            string employeeName,
+            string department,
+            DateTime date,
+            TimeSpan time)
+        {
+            var checkTime = new DateTime(date.Year, date.Month, date.Day, 
+                time.Hours, time.Minutes, time.Seconds);
+        
+            return new AttendanceRecord
+            {
+                EmployeeId = employeeId,
+                EmployeeName = employeeName,
+                Department = department,
+                CheckTime = checkTime,
+                DayOfMonth = date.Day,
+                CreatedAt = DateTime.Now
+            };
+        }
+        
+        #endregion
     }
 }
