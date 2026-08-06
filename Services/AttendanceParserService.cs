@@ -260,20 +260,20 @@ namespace ExcelToSQLite.Services
                     case TableType.OldStyleKeyValue:
                         records = ParseOldStyleAttendance(rows, doc);
                         break;
-                    case TableType.SwipeRecord:
-                        records = ParseSwipeRecordStyle(rows);
+                    case TableType.Template1:
+                        records = ParseAttendanceRecordStyle1(rows);
                         break;
-                    case TableType.AttendanceRecord:
-                        records = ParseAttendanceRecordStyle(rows);
+                    case TableType.Template2:
+                        records = ParseAttendanceRecordStyle2(rows);
                         break;
-                    case TableType.MonthlySummary:
-                        records = ParseMonthlySummaryStyle(rows);
+                    case TableType.Template3:
+                        records = ParseAttendanceRecordStyle3(rows);
                         break;
-                    case TableType.AttendanceRecordV2:
-                        records = ParseAttendanceRecordV2Style(rows);
+                    case TableType.Template4:
+                        records = ParseAttendanceRecordStyle4(rows);
                         break;
-                    case TableType.AttendanceDetail:
-                        records = ParseAttendanceDetailStyle(rows);
+                    case TableType.Template5:
+                        records = ParseAttendanceRecordStyle5(rows);
                         break;
                     default:
                         records = ParseOldStyleAttendance(rows, doc);
@@ -300,44 +300,39 @@ namespace ExcelToSQLite.Services
                 headerText.Append(rows[i].InnerText);
             }
             var fullText = headerText.ToString();
-        
-            // 检测样表5：考勤明细表（包含"对应时段"、"上班时间"、"签到时间"）
-            if (fullText.Contains("对应时段") && fullText.Contains("上班时间") && 
-                fullText.Contains("签到时间") && fullText.Contains("签退时间"))
-            {
-                return TableType.AttendanceDetail;
-            }
-        
-            // 检测旧样式（键值对格式）
+            
+            // 检测旧样式
             if (fullText.Contains("工号：") && fullText.Contains("姓名：") && fullText.Contains("部门："))
             {
                 return TableType.OldStyleKeyValue;
             }
-        
-            // 检测样表1：刷卡记录表
+            // 检测样表1
             if (fullText.Contains("刷卡记录表") && fullText.Contains("考勤日期"))
             {
-                return TableType.SwipeRecord;
+                return TableType.Template1;
             }
-        
-            // 检测样表2：考勤记录表（表头有日期和星期）
+            // 检测样表2
             if (fullText.Contains("考勤记录表") && fullText.Contains("建表时间"))
             {
-                return TableType.AttendanceRecord;
+                return TableType.Template2;
             }
-        
-            // 检测样表4：考勤记录表(20260701-20260731)
-            if (fullText.Contains("考勤记录表("))
-            {
-                return TableType.AttendanceRecordV2;
-            }
-        
-            // 检测样表3：月度汇总表
+            // 检测样表3
             if (fullText.Contains("月度汇总表") || fullText.Contains("应出勤天数"))
             {
-                return TableType.MonthlySummary;
+                return TableType.Template3;
+            }            
+            // 检测样表4
+            if (fullText.Contains("考勤记录表("))
+            {
+                return TableType.Template4;
             }
-        
+            // 检测样表5
+            if (fullText.Contains("对应时段") && fullText.Contains("上班时间") && 
+                fullText.Contains("签到时间") && fullText.Contains("签退时间"))
+            {
+                return TableType.Template5;
+            }
+            
             // 检测数据行首列是否有工号（数字）- 用于样表1和样表2
             if (rows.Count > 5)
             {
@@ -354,10 +349,10 @@ namespace ExcelToSQLite.Services
                                 nextRowText.Contains("五") || nextRowText.Contains("六") ||
                                 nextRowText.Contains("日"))
                             {
-                                return TableType.SwipeRecord;
+                                return TableType.Template1;
                             }
                         }
-                        return TableType.SwipeRecord;
+                        return TableType.Template1;
                     }
                 }
             }
@@ -509,7 +504,7 @@ namespace ExcelToSQLite.Services
         /// <summary>
         /// 解析样表1：刷卡记录表
         /// </summary>
-        private List<AttendanceRecord> ParseSwipeRecordStyle(HtmlNodeCollection rows)
+        private List<AttendanceRecord> ParseAttendanceRecordStyle1(HtmlNodeCollection rows)
         {
             var records = new List<AttendanceRecord>();
 
@@ -641,9 +636,9 @@ namespace ExcelToSQLite.Services
         }
 
         /// <summary>
-        /// 解析样表2：考勤记录表
+        /// 解析样表2
         /// </summary>
-        private List<AttendanceRecord> ParseAttendanceRecordStyle(HtmlNodeCollection rows)
+        private List<AttendanceRecord> ParseAttendanceRecordStyle2(HtmlNodeCollection rows)
         {
             var records = new List<AttendanceRecord>();
 
@@ -791,9 +786,9 @@ namespace ExcelToSQLite.Services
         }
 
         /// <summary>
-        /// 解析样表3：月度汇总表
+        /// 解析样表3
         /// </summary>
-        private List<AttendanceRecord> ParseMonthlySummaryStyle(HtmlNodeCollection rows)
+        private List<AttendanceRecord> ParseAttendanceRecordStyle3(HtmlNodeCollection rows)
         {
             var records = new List<AttendanceRecord>();
 
@@ -986,9 +981,9 @@ namespace ExcelToSQLite.Services
         }
 
         /// <summary>
-        /// 解析样表4：考勤记录表(20260701-20260731)
+        /// 解析样表4
         /// </summary>
-        private List<AttendanceRecord> ParseAttendanceRecordV2Style(HtmlNodeCollection rows)
+        private List<AttendanceRecord> ParseAttendanceRecordStyle4(HtmlNodeCollection rows)
         {
             var records = new List<AttendanceRecord>();
 
@@ -1336,21 +1331,21 @@ namespace ExcelToSQLite.Services
         /// </summary>
         private enum TableType
         {
-            OldStyleKeyValue,      // 旧样式（键值对）
-            SwipeRecord,           // 样表1：刷卡记录表
-            AttendanceRecord,      // 样表2：考勤记录表
-            MonthlySummary,        // 样表3：月度汇总表
-            AttendanceRecordV2,     // 样表4：考勤记录表(20260701-20260731)
-            AttendanceDetail       // 样表5：考勤明细表
+            OldStyleKeyValue,       // 旧样式  市局
+            Template1,              // 样表1：施甸县局
+            Template2,              // 样表2：隆阳区局
+            Template3,              // 样表3：腾冲市局
+            Template4,              // 样表4：昌宁县局
+            Template5               // 样表5：龙陵县局
         }
         
         #region 样表5 支持 龙陵局样表
         
         /// <summary>
-        /// 解析样表5：6月县局机关考勤明细
+        /// 解析样表5
         /// 只读取签到时间和签退时间作为打卡记录，上班时间和下班时间是规定时间，不作为打卡记录
         /// </summary>
-        private List<AttendanceRecord> ParseAttendanceDetailStyle(HtmlNodeCollection rows)
+        private List<AttendanceRecord> ParseAttendanceRecordStyle5(HtmlNodeCollection rows)
         {
             var records = new List<AttendanceRecord>();
         
